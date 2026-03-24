@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Promoter Stake Dashboard — AI Financial Intelligence</title>
+  <meta name="description" content="AI-powered dashboard tracking NSE/BSE promoter selling activity. Verdicts, risk scores, trend analysis — all free." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+
+  <!-- ── HEADER ── -->
+  <header class="header">
+    <div class="header-inner">
+      <div class="logo">
+        <div class="logo-icon">📈</div>
+        <div>
+          <div class="logo-title">Promoter Stake Dashboard</div>
+          <div class="logo-sub">AI Financial Intelligence · NSE / BSE</div>
+        </div>
+      </div>
+      <div class="header-badges">
+        <span class="badge badge-free">🆓 Free</span>
+        <span class="badge badge-live">Live Data</span>
+        <span id="lastUpdatedBadge" class="badge badge-time" style="display:none"></span>
+      </div>
+    </div>
+  </header>
+
+  <!-- ── HERO ── -->
+  <section class="hero">
+    <h1 class="hero-title">
+      Promoter Selling <span class="grad">Decoded by AI</span>
+    </h1>
+    <p class="hero-sub">
+      Tracks NSE &amp; BSE companies where promoters hold <strong>&gt;40%</strong> and are <strong>reducing stake</strong>.<br/>
+      AI agent analyzes <em>reasons</em>, predicts <em>impact</em>, and gives you an <em>actionable verdict</em>.
+    </p>
+
+    <!-- ── COMMAND INPUT ── -->
+    <div class="command-box">
+      <div class="command-prompt">
+        <span class="prompt-symbol">$</span>
+        <input
+          id="commandInput"
+          type="text"
+          placeholder='Type "update", "analyze RELIANCE", or "trend"…'
+          autocomplete="off"
+          spellcheck="false"
+        />
+        <button id="runBtn" onclick="handleCommand()">Run ▶</button>
+      </div>
+      <div class="command-hint">
+        💡 <kbd>update</kbd> scan markets &nbsp;·&nbsp;
+        <kbd>analyze [ticker]</kbd> deep dive &nbsp;·&nbsp;
+        <kbd>trend</kbd> view charts
+      </div>
+    </div>
+  </section>
+
+  <!-- ── PROGRESS BAR ── -->
+  <div id="progressSection" class="progress-section" style="display:none">
+    <div class="progress-label">
+      <span id="progressText">Initializing scan…</span>
+      <span id="progressPct">0%</span>
+    </div>
+    <div class="progress-track">
+      <div id="progressBar" class="progress-bar"></div>
+    </div>
+    <div id="currentTicker" class="current-ticker">🔍 Scanning…</div>
+  </div>
+
+  <!-- ══════════ DASHBOARD SECTIONS ══════════ -->
+  <div id="dashboardSections" class="dashboard" style="display:none">
+
+    <!-- ── STATS STRIP ── -->
+    <div id="statsStrip" class="stats-strip" style="display:none">
+      <div class="stat-card">
+        <div class="stat-num total" id="statTotal">0</div>
+        <div class="stat-label">Companies Found</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num exit" id="statExit">0</div>
+        <div class="stat-label">🔴 Exit Signals</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num caution" id="statCaution">0</div>
+        <div class="stat-label">🟠 Caution</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num hold" id="statHold">0</div>
+        <div class="stat-label">🟡 Hold</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num buy" id="statBuy">0</div>
+        <div class="stat-label">🟢 Buy Signals</div>
+      </div>
+    </div>
+
+    <!-- ── AI INSIGHTS ── -->
+    <div class="section-header">
+      <span class="section-icon">🧠</span>
+      <span class="section-title">AI Insights</span>
+    </div>
+    <div id="insightsGrid" class="insights-grid"></div>
+
+    <!-- ── TREND CHARTS ── -->
+    <div id="chartsSection" style="display:none">
+      <div class="section-header">
+        <span class="section-icon">📊</span>
+        <span class="section-title">30-Day Trend Analysis</span>
+      </div>
+      <div class="charts-grid">
+        <div class="chart-card">
+          <div class="chart-title">Risk Distribution</div>
+          <div class="chart-canvas-wrap">
+            <canvas id="riskChart"></canvas>
+          </div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title">AI Verdict Breakdown</div>
+          <div class="chart-canvas-wrap">
+            <canvas id="verdictChart"></canvas>
+          </div>
+        </div>
+        <div class="chart-card" style="grid-column: 1 / -1">
+          <div class="chart-title">Top 10 Biggest Promoter Reductions — Holding Comparison</div>
+          <div class="chart-canvas-wrap">
+            <canvas id="holdingChart"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── NEW ALERTS / FILTER ── -->
+    <div class="section-header">
+      <span class="section-icon">🔴</span>
+      <span class="section-title">Promoter Selling Alerts</span>
+    </div>
+    <div id="filterBar" class="filter-bar" style="display:none">
+      <input id="searchInput" type="text" placeholder="🔍 Search company or ticker…" oninput="filterResults()" />
+      <div class="filter-btns">
+        <button class="filter-btn active" onclick="setSentimentFilter('all', this)">All</button>
+        <button class="filter-btn" onclick="setSentimentFilter('Exit', this)">🔴 Exit</button>
+        <button class="filter-btn" onclick="setSentimentFilter('Caution', this)">🟠 Caution</button>
+        <button class="filter-btn" onclick="setSentimentFilter('Hold', this)">🟡 Hold</button>
+        <button class="filter-btn" onclick="setSentimentFilter('Buy', this)">🟢 Buy</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── RESULTS GRID ── -->
+  <div class="dashboard">
+    <main id="resultsGrid" class="results-grid"></main>
+  </div>
+
+  <!-- ── HIGH RISK SECTION ── -->
+  <div id="highRiskSection" class="dashboard" style="display:none">
+    <div class="section-header">
+      <span class="section-icon">⚠️</span>
+      <span class="section-title">High Risk Companies</span>
+      <span id="highRiskCount" class="section-count">0</span>
+    </div>
+    <div id="highRiskGrid" class="results-grid"></div>
+  </div>
+
+  <!-- ── EMPTY STATE ── -->
+  <div id="emptyState" class="empty-state" style="display:none">
+    <div class="empty-icon">🎯</div>
+    <div class="empty-title">No Matches Found</div>
+    <div class="empty-sub">No companies match your current filters. Try adjusting search or filter criteria.</div>
+  </div>
+
+  <!-- ── ERROR STATE ── -->
+  <div id="errorState" class="error-state" style="display:none">
+    <div class="error-icon">⚠️</div>
+    <div id="errorMsg" class="empty-sub" style="color:var(--orange)">An error occurred.</div>
+    <button class="retry-btn" onclick="handleCommand()">Retry Scan</button>
+  </div>
+
+  <!-- ── MODAL OVERLAY ── -->
+  <div id="modalOverlay" class="modal-overlay" onclick="if(event.target===this)closeModal()">
+    <div class="modal">
+      <div class="modal-header">
+        <div id="modalTitle" class="modal-title">Deep Analysis</div>
+        <button class="modal-close" onclick="closeModal()">✕</button>
+      </div>
+      <div id="modalBody" class="modal-body"></div>
+    </div>
+  </div>
+
+  <!-- ── FOOTER ── -->
+  <footer class="footer">
+    <p>Built with ❤️ · Data from <a href="https://www.screener.in" target="_blank">Screener.in</a> &amp; NSE India</p>
+    <p class="disclaimer">⚠️ For educational purposes only. Not financial advice. Always do your own due diligence.</p>
+  </footer>
+
+  <!-- Chart.js from CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+  <script src="/static/app.js"></script>
+</body>
+</html>
