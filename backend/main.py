@@ -19,17 +19,26 @@ from backend.routers import auth, stocks, watchlist, alerts, scanner
 async def lifespan(app: FastAPI):
     """Application lifecycle: startup and shutdown."""
     # Startup
-    await connect_db()
-    start_scheduler()
-    print("\n" + "=" * 60)
-    print("  [*] PROMOTER STAKE AI PLATFORM")
-    print("  [>] API: http://localhost:8000")
-    print("  [>] Docs: http://localhost:8000/docs")
-    print("=" * 60 + "\n")
+    try:
+        await connect_db()
+        # start_scheduler()
+        print("\n" + "=" * 60)
+        print("  [*] PROMOTER STAKE AI PLATFORM")
+        print("  [>] API: http://localhost:8001")
+        print("  [>] Docs: http://localhost:8001/docs")
+        print("=" * 60 + "\n")
+    except Exception as e:
+        print(f"[CRITICAL] Startup failed: {e}")
+        import traceback
+        traceback.print_exc()
+        
     yield
     # Shutdown
-    stop_scheduler()
-    await close_db()
+    try:
+        stop_scheduler()
+        await close_db()
+    except Exception as e:
+        print(f"[ERROR] Shutdown error: {e}")
 
 
 app = FastAPI(

@@ -5,6 +5,7 @@ Falls back to rule-based analysis when API key is not configured.
 """
 
 import json
+import asyncio
 from openai import AsyncOpenAI
 from backend.config import settings
 from backend.services.analyzer import analyze_company as rule_based_analyze
@@ -80,9 +81,16 @@ Provide your analysis as JSON only, no other text."""
 
         # Merge AI results with rule-based analysis (for structural fields)
         base = rule_based_analyze(company_data)
-        base["ai_reason"] = ai_result.get("reason_for_selling", "")
-        base["ai_outlook"] = ai_result.get("future_outlook", "")
-        base["ai_explanation"] = ai_result.get("risk_explanation", "")
+        
+        # Construct summary from AI parts
+        ai_reason = ai_result.get("reason_for_selling", "")
+        ai_outlook = ai_result.get("future_outlook", "")
+        ai_risk = ai_result.get("risk_explanation", "")
+        
+        base["summary"] = f"{ai_reason} {ai_outlook} {ai_risk}".strip()
+        base["ai_reason"] = ai_reason
+        base["ai_outlook"] = ai_outlook
+        base["ai_explanation"] = ai_risk
         base["ai_key_factors"] = ai_result.get("key_factors", [])
 
         # Override verdict if AI provides one
@@ -112,9 +120,20 @@ Provide your analysis as JSON only, no other text."""
 
 
 async def ai_analyze_all(companies: list[dict]) -> list[dict]:
-    """Analyze all companies, using AI where possible."""
+    """Analyze all companies in parallel (limit 5), using AI where possible."""
+    sem = asyncio.Semaphore(5)
+
+    async def sem_analyze(c):
+        async with sem:
+            return await ai_analyze_company(c)
+
+    tasks = [sem_analyze(c) for c in companies]
+    analyses = await asyncio.gather(*tasks, return_exceptions=True)
+    
     results = []
-    for c in companies:
-        analysis = await ai_analyze_company(c)
+    for c, analysis in zip(companies, analyses):
+        if isinstance(analysis, Exception):
+            logger.error(f"Error analyzing {c.get('ticker')}: {analysis}")
+            analysis = rule_based_analyze(c)
         results.append({**c, "analysis": analysis})
     return results

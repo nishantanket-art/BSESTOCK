@@ -164,8 +164,18 @@ def analyze_company(company_data: dict) -> dict:
     impact = analyze_impact(promoter_current, change_abs, category)
     recommendation = get_recommendation(verdict["label"])
 
+    # Generate a descriptive summary for the UI
+    summary = f"The promoter holding has {('reduced' if change_abs > 0 else 'remained stable')}. "
+    summary += f"Current stake is {promoter_current}%. "
+    if change_abs >= 1.0:
+        summary += f"This is a {risk['level'].lower()} risk event involving a {change_abs}% stake reduction. "
+        summary += f"Likely reasons include {', '.join(template['reasons'][:2]).lower()}. "
+    else:
+        summary += "The activity appears to be routine or administrative in nature with negligible impact on long-term ownership structure."
+
     return {
         "category": category,
+        "summary": summary,
         "reasons": template["reasons"],
         "mode_of_selling": template["mode_of_selling"],
         "sentiment": template["sentiment"],
@@ -177,6 +187,7 @@ def analyze_company(company_data: dict) -> dict:
         "risk_level": risk["level"],
         "risk_color": risk["color"],
         "risk_icon": risk["icon"],
+        "risk_score": 100 if risk["level"] == "High" else 60 if risk["level"] == "Medium" else 30,
         "intent_confidence": intent["confidence"],
         "intent_is_trend": intent["is_trend"],
         "intent_trend_label": intent["trend_label"],

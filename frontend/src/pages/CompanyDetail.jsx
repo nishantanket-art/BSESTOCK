@@ -42,7 +42,7 @@ export default function CompanyDetail() {
   const chartData = (stock?.quarters || []).map((q, idx) => ({
     name: q,
     holding: stock.all_holdings && stock.all_holdings[idx] !== undefined ? stock.all_holdings[idx] : null,
-    price: null // Frontend doesn't have live historical price data here yet
+    price: stock.all_prices && stock.all_prices[idx] !== undefined ? stock.all_prices[idx] : null
   }));
 
   const riskClass = {
@@ -102,14 +102,18 @@ export default function CompanyDetail() {
               <LineChart data={chartData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border-light)" vertical={false} />
                 <XAxis dataKey="name" stroke="var(--color-text-muted)" fontSize={12} tickMargin={10} />
-                <YAxis domain={[0, 100]} stroke="var(--color-accent-blue)" fontSize={12} tickFormatter={val => `${val}%`} />
+                <YAxis yAxisId="left" domain={[0, 100]} stroke="var(--color-accent-blue)" fontSize={12} tickFormatter={val => `${val}%`} />
+                <YAxis yAxisId="right" orientation="right" domain={['auto', 'auto']} stroke="var(--color-accent-amber)" fontSize={12} tickFormatter={val => `₹${val}`} />
                 <Tooltip 
                   contentStyle={{ backgroundColor: 'var(--color-bg-card)', borderColor: 'var(--color-border)', borderRadius: '8px' }}
                   itemStyle={{ fontSize: '13px' }}
                   labelStyle={{ color: 'var(--color-text-secondary)', marginBottom: '4px' }}
                 />
                 <Legend iconType="circle" wrapperStyle={{ fontSize: '12px' }}/>
-                <Line type="monotone" dataKey="holding" name="Promoter Holding (%)" stroke="var(--color-accent-blue)" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} />
+                <Line yAxisId="left" type="monotone" dataKey="holding" name="Promoter Holding (%)" stroke="var(--color-accent-blue)" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} />
+                {chartData.some(d => d.price) && (
+                  <Line yAxisId="right" type="monotone" dataKey="price" name="Stock Price (₹)" stroke="var(--color-accent-amber)" strokeWidth={2} dot={{ r: 4 }} />
+                )}
               </LineChart>
             </ResponsiveContainer>
           </div>
@@ -121,20 +125,44 @@ export default function CompanyDetail() {
             <div className="absolute top-0 right-0 w-32 h-32 bg-[var(--color-accent-purple)]/5 rounded-bl-full -z-10" />
             <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
               <Brain className="w-5 h-5 text-[var(--color-accent-purple)]" />
-              AI Verdict
+              AI Deep Analysis
             </h2>
             <div className="mb-6">
               <span className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-lg font-bold ${verdictColors[analysis?.verdict] || verdictColors.Hold}`}>
                 {analysis?.verdict_icon || '🟡'} {analysis?.verdict || 'Hold'}
               </span>
             </div>
-            {analysis?.summary ? (
-              <p className="text-[var(--color-text-secondary)] text-sm leading-relaxed mb-4">
-                {analysis.summary}
-              </p>
-            ) : (
-              <p className="text-[var(--color-text-muted)] text-sm italic mb-4">No AI summary available for this scan.</p>
-            )}
+            
+            <div className="space-y-4">
+              <section>
+                <h4 className="text-sm font-semibold text-[var(--color-text-primary)] mb-1 uppercase tracking-tight">Summary</h4>
+                <p className="text-[var(--color-text-secondary)] text-sm leading-relaxed">
+                  {analysis?.summary || 'Scanning for detailed insights...'}
+                </p>
+              </section>
+
+              {analysis?.ai_reason && (
+                <section>
+                  <h4 className="text-sm font-semibold text-[var(--color-text-primary)] mb-1 uppercase tracking-tight">AI Reasoning</h4>
+                  <p className="text-[var(--color-text-secondary)] text-xs leading-relaxed italic">
+                    {analysis.ai_reason}
+                  </p>
+                </section>
+              )}
+
+              {analysis?.reasons && analysis.reasons.length > 0 && (
+                <section>
+                  <h4 className="text-sm font-semibold text-[var(--color-text-primary)] mb-2 uppercase tracking-tight">Possible Reasons</h4>
+                  <ul className="grid grid-cols-1 gap-2">
+                    {analysis.reasons.map((reason, i) => (
+                      <li key={i} className="bg-white/5 border border-white/10 p-2 rounded text-[11px] text-[var(--color-text-secondary)] flex gap-2">
+                         <span className="text-[var(--color-accent-purple)]">•</span> {reason}
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              )}
+            </div>
             
             {analysis?.key_factors && analysis.key_factors.length > 0 && (
               <div className="space-y-2">
