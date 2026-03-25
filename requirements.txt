@@ -1,4 +1,20 @@
+# Backend
+fastapi
+uvicorn[standard]
+motor
+pymongo
+pydantic
+python-dotenv
+python-jose[cryptography]
+passlib[bcrypt]
+bcrypt==4.0.1
+httpx
+beautifulsoup4
+yfinance
+apscheduler
+openai
+
+# Original (kept for legacy compatibility)
 flask
 requests
-beautifulsoup4
 gunicorn
