@@ -1,0 +1,216 @@
+﻿python : INFO:     
+Started server process 
+[8836]
+At line:1 char:79
++ ... ion 
+SilentlyContinue; 
+python -m uvicorn 
+backend.main:app 2>&1 
+| Out-F ...
++                      
+     ~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo     
+         : NotSpecifi  
+  ed: (INFO:     Sta   
+ rted server proces    
+s [8836]:String) [    
+], RemoteException
+    + FullyQualifiedEr 
+   rorId : NativeComm  
+  andError
+ 
+INFO:     Waiting for 
+application startup.
+ERROR:    Traceback 
+(most recent call 
+last):
+  File "C:\Users\atrin\
+AppData\Local\Packages\
+PythonSoftwareFoundatio
+n.Python.3.12_qbz5n2kfr
+a8p0\LocalCache\local-p
+ackages\Python312\site-
+packages\starlette\rout
+ing.py", line 638, in 
+lifespan
+    async with self.lif
+espan_context(app) as 
+maybe_state:
+               ^^^^^^^^
+^^^^^^^^^^^^^^^^^^
+  File "C:\Program File
+s\WindowsApps\PythonSof
+twareFoundation.Python.
+3.12_3.12.2800.0_x64__q
+bz5n2kfra8p0\Lib\contex
+tlib.py", line 210, in 
+__aenter__
+    return await 
+anext(self.gen)
+           
+^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\atrin\
+AppData\Local\Packages\
+PythonSoftwareFoundatio
+n.Python.3.12_qbz5n2kfr
+a8p0\LocalCache\local-p
+ackages\Python312\site-
+packages\fastapi\routin
+g.py", line 216, in 
+merged_lifespan
+    async with 
+original_context(app) 
+as 
+maybe_original_state:
+               
+^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Program File
+s\WindowsApps\PythonSof
+twareFoundation.Python.
+3.12_3.12.2800.0_x64__q
+bz5n2kfra8p0\Lib\contex
+tlib.py", line 210, in 
+__aenter__
+    return await 
+anext(self.gen)
+           
+^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\atrin\
+AppData\Local\Packages\
+PythonSoftwareFoundatio
+n.Python.3.12_qbz5n2kfr
+a8p0\LocalCache\local-p
+ackages\Python312\site-
+packages\fastapi\routin
+g.py", line 216, in 
+merged_lifespan
+    async with 
+original_context(app) 
+as 
+maybe_original_state:
+               
+^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Program File
+s\WindowsApps\PythonSof
+twareFoundation.Python.
+3.12_3.12.2800.0_x64__q
+bz5n2kfra8p0\Lib\contex
+tlib.py", line 210, in 
+__aenter__
+    return await 
+anext(self.gen)
+           
+^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\atrin\
+AppData\Local\Packages\
+PythonSoftwareFoundatio
+n.Python.3.12_qbz5n2kfr
+a8p0\LocalCache\local-p
+ackages\Python312\site-
+packages\fastapi\routin
+g.py", line 216, in 
+merged_lifespan
+    async with 
+original_context(app) 
+as 
+maybe_original_state:
+               
+^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Program File
+s\WindowsApps\PythonSof
+twareFoundation.Python.
+3.12_3.12.2800.0_x64__q
+bz5n2kfra8p0\Lib\contex
+tlib.py", line 210, in 
+__aenter__
+    return await 
+anext(self.gen)
+           
+^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\atrin\
+AppData\Local\Packages\
+PythonSoftwareFoundatio
+n.Python.3.12_qbz5n2kfr
+a8p0\LocalCache\local-p
+ackages\Python312\site-
+packages\fastapi\routin
+g.py", line 216, in 
+merged_lifespan
+    async with 
+original_context(app) 
+as 
+maybe_original_state:
+               
+^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Program File
+s\WindowsApps\PythonSof
+twareFoundation.Python.
+3.12_3.12.2800.0_x64__q
+bz5n2kfra8p0\Lib\contex
+tlib.py", line 210, in 
+__aenter__
+    return await 
+anext(self.gen)
+           
+^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\atrin\
+AppData\Local\Packages\
+PythonSoftwareFoundatio
+n.Python.3.12_qbz5n2kfr
+a8p0\LocalCache\local-p
+ackages\Python312\site-
+packages\fastapi\routin
+g.py", line 216, in 
+merged_lifespan
+    async with 
+original_context(app) 
+as 
+maybe_original_state:
+               
+^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Program File
+s\WindowsApps\PythonSof
+twareFoundation.Python.
+3.12_3.12.2800.0_x64__q
+bz5n2kfra8p0\Lib\contex
+tlib.py", line 210, in 
+__aenter__
+    return await 
+anext(self.gen)
+           
+^^^^^^^^^^^^^^^^^^^^^
+  File "D:\pr\backend\m
+ain.py", line 22, in 
+lifespan
+    await connect_db()
+  File "D:\pr\backend\d
+atabase.py", line 27, 
+in connect_db
+    print(f"[\u2713] 
+Connected to MongoDB: {
+settings.DATABASE_NAME}
+")
+  File "C:\Program File
+s\WindowsApps\PythonSof
+twareFoundation.Python.
+3.12_3.12.2800.0_x64__q
+bz5n2kfra8p0\Lib\encodi
+ngs\cp1252.py", line 
+19, in encode
+    return codecs.charm
+ap_encode(input,self.er
+rors,encoding_table)[0]
+           ^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 
+'charmap' codec can't 
+encode character 
+'\u2713' in position 
+1: character maps to 
+<undefined>
+
+ERROR:    Application 
+startup failed. 
+Exiting.

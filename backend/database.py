@@ -3,17 +3,17 @@ database.py
 MongoDB connection using Motor (async driver).
 """
 
-from motor.motor_asyncio import AsyncIOMotorClient
+from mongomock_motor import AsyncMongoMockClient
 from backend.config import settings
 
-client: AsyncIOMotorClient = None
+client: AsyncMongoMockClient = None
 db = None
 
 
 async def connect_db():
     """Initialize MongoDB connection."""
     global client, db
-    client = AsyncIOMotorClient(settings.MONGODB_URI)
+    client = AsyncMongoMockClient()
     db = client[settings.DATABASE_NAME]
 
     # Create indexes
@@ -24,15 +24,15 @@ async def connect_db():
     await db.alerts.create_index([("user_id", 1), ("created_at", -1)])
     await db.scan_logs.create_index("started_at", expireAfterSeconds=2592000)  # 30-day TTL
 
-    print(f"[✓] Connected to MongoDB: {settings.DATABASE_NAME}")
+    print(f"[OK] Connected to MongoDB: {settings.DATABASE_NAME}")
 
 
 async def close_db():
     """Close MongoDB connection."""
     global client
     if client:
-        client.close()
-        print("[✓] MongoDB connection closed")
+        # client.close()  # mongomock doesn't need to close
+        print("[OK] MongoDB connection closed")
 
 
 def get_db():
