@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { stocksAPI, watchlistAPI } from '../services/api';
+import { stocksAPI, watchlistAPI, scannerAPI } from '../services/api';
 import StockCard from '../components/StockCard';
-import { Filter, Search, TrendingUp, AlertTriangle, Info } from 'lucide-react';
+import { Filter, Search, TrendingUp, AlertTriangle, Info, Play } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export default function Dashboard() {
@@ -41,13 +41,22 @@ export default function Dashboard() {
         watchlistAPI.get()
       ]);
       
-      setStocks(stocksRes.data);
+      setStocks(stocksRes.data.results || []);
       setWatchlist(new Set(watchlistRes.data.map(item => item.ticker)));
     } catch (err) {
       console.error(err);
       toast.error('Failed to load stocks data');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleRunScan = async () => {
+    try {
+      await scannerAPI.run();
+      toast.success('Scanner started! Check the top navigation bar for progress.');
+    } catch (err) {
+      toast.error('Failed to start scanner');
     }
   };
 
@@ -90,6 +99,14 @@ export default function Dashboard() {
 
         {/* Filters */}
         <div className="flex flex-wrap items-center gap-3">
+          <button 
+            onClick={handleRunScan}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-[var(--color-accent-blue)] hover:bg-blue-600 text-white text-sm font-medium rounded-lg transition"
+          >
+            <Play className="w-3.5 h-3.5" />
+            Run Scan
+          </button>
+          
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-text-muted)]" />
             <input
