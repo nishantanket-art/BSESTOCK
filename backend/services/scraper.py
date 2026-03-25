@@ -29,7 +29,7 @@ HEADERS = {
 
 TICKER_UNIVERSE = [
     # Large Caps
-    "ADANIPORTS", "ADANIENT", "ADANIGREEN", "ADANITRANS",
+    "ADANIPORTS", "ADANIENT", "ADANIGREEN", "ADANIENSOL",
     "RELIANCE", "TCS", "HDFCBANK", "INFY", "ICICIBANK",
     "HINDUNILVR", "BAJFINANCE", "KOTAKBANK", "LT", "AXISBANK",
     "ASIANPAINT", "MARUTI", "SUNPHARMA", "TITAN", "NESTLEIND",
@@ -39,9 +39,9 @@ TICKER_UNIVERSE = [
     "TATAMOTORS", "TATASTEEL", "JSWSTEEL", "HINDALCO", "VEDL",
     "GRASIM", "INDUSINDBK", "BPCL", "IOC", "HPCL",
     "BRITANNIA", "DABUR", "MARICO", "PIDILITIND", "BERGEPAINT",
-    # Mid Caps
+    # Mid & Growth Caps
     "MUTHOOTFIN", "CHOLAFIN", "LICHSGFIN",
-    "ZOMATO", "NYKAA", "DMART", "TRENT", "JUBLFOOD",
+    "ZOMATO", "NYKAA", "PAYTM", "TRENT", "JUBLFOOD",
     "CUMMINSIND", "THERMAX", "BHEL", "SAIL", "NMDC",
     "FORTIS", "MAXHEALTH", "METROPOLIS", "LALPATHLAB",
     "IRCTC", "CONCOR", "APOLLOHOSP", "ABBOTINDIA",
@@ -49,7 +49,7 @@ TICKER_UNIVERSE = [
     "VOLTAS", "WHIRLPOOL", "HAVELLS", "POLYCAB",
     "PAGEIND", "RAYMOND", "MANYAVAR",
     "PERSISTENT", "LTIM", "COFORGE", "MPHASIS",
-    "INDIANB", "FEDERALBNK", "IDFCFIRSTB",
+    "INDIANB", "FEDERALBNK", "IDFCFIRSTB", "AAVAS", "ANGELONE",
 ]
 
 # In-memory scan status (shared across async tasks)
@@ -100,10 +100,12 @@ def _parse_screener_page(html: str, ticker: str) -> dict | None:
     promoter_prev = None
     all_holdings = []
     quarters = []
+    found_shareholding_section = False
 
     for section in soup.find_all("section"):
         heading = section.find(["h2", "h3"])
         if heading and "shareholding" in heading.get_text(strip=True).lower():
+            found_shareholding_section = True
             table = section.find("table")
             if table:
                 rows = table.find_all("tr")
@@ -115,23 +117,37 @@ def _parse_screener_page(html: str, ticker: str) -> dict | None:
                         if not cells:
                             continue
                         label = cells[0].get_text(strip=True).lower()
+                        # Match 'promoter' but not 'pledge' or 'public'
                         if "promoter" in label and "pledge" not in label:
                             vals = [c.get_text(strip=True).replace("%", "").strip() for c in cells[1:]]
                             for v in vals:
                                 try:
-                                    all_holdings.append(float(v))
+                                    # Handle empty or dash values
+                                    if v in ("", "-", "n/a"):
+                                        all_holdings.append(None)
+                                    else:
+                                        all_holdings.append(float(v))
                                 except ValueError:
                                     all_holdings.append(None)
+                            
                             clean = [v for v in all_holdings if v is not None]
                             if len(clean) >= 2:
                                 promoter_current = clean[-1]
                                 promoter_prev = clean[-2]
                             elif len(clean) == 1:
                                 promoter_current = clean[0]
+                                promoter_prev = clean[0]
                             break
             break
 
+    # If section exists but no promoter row found, it's likely professionally managed (0% promoters)
+    if found_shareholding_section and promoter_current is None:
+        promoter_current = 0.0
+        promoter_prev = 0.0
+        all_holdings = [0.0] * (len(quarters) if quarters else 1)
+
     if promoter_current is None:
+        # If we didn't even find the section, might be a parsing error or 404
         return None
 
     return {
@@ -140,7 +156,7 @@ def _parse_screener_page(html: str, ticker: str) -> dict | None:
         "market_cap": market_cap,
         "promoter_current": promoter_current,
         "promoter_prev": promoter_prev,
-        "all_holdings": [h for h in all_holdings if h is not None],
+        "all_holdings": [h if h is not None else 0.0 for h in all_holdings],
         "quarters": quarters,
         "exchange": "NSE",
         "url": f"https://www.screener.in/company/{ticker}/",
@@ -203,8 +219,13 @@ async def run_full_scan():
 
                 current = data["promoter_current"]
                 prev = data["promoter_prev"]
+                
+                # Calculate change
+                change = round(current - prev, 2) if prev is not None else 0
+                data["promoter_change"] = change
+                data["promoter_change_abs"] = abs(change)
 
-                # Persist company to DB regardless
+                # Persist company to DB with ALL fields including promoter_change
                 await db.companies.update_one(
                     {"ticker": ticker},
                     {"$set": {
@@ -214,6 +235,8 @@ async def run_full_scan():
                         "url": data["url"],
                         "promoter_current": current,
                         "promoter_prev": prev,
+                        "promoter_change": change,
+                        "promoter_change_abs": abs(change),
                         "all_holdings": data["all_holdings"],
                         "quarters": data["quarters"],
                         "last_scanned": datetime.utcnow().isoformat(),
@@ -230,12 +253,8 @@ async def run_full_scan():
                     "scanned_at": datetime.utcnow().isoformat(),
                 })
 
-                # Track sellers
-                if current >= settings.SCRAPER_MIN_HOLDING and prev is not None and current < prev:
-                    change = round(current - prev, 2)
-                    data["promoter_change"] = change
-                    data["promoter_change_abs"] = abs(change)
-                    results.append(data)
+                # Add to results list
+                results.append(data)
 
                 await asyncio.sleep(settings.SCRAPER_DELAY + random.uniform(0.2, 0.5))
 

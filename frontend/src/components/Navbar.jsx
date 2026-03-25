@@ -16,10 +16,17 @@ export default function Navbar() {
   const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
+    let wasRunning = false;
     const interval = setInterval(async () => {
       try {
         const res = await scannerAPI.status();
         setScanStatus(res.data);
+        if (res.data.status === 'running') {
+          wasRunning = true;
+        } else if (res.data.status === 'done' && wasRunning) {
+          wasRunning = false;
+          window.location.reload();
+        }
       } catch (e) { /* ignore */ }
     }, 5000);
     return () => clearInterval(interval);
