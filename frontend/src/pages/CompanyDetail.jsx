@@ -32,24 +32,24 @@ export default function CompanyDetail() {
     );
   }
 
-  if (!data) return <div className="p-8 text-center text-[var(--color-text-secondary)]">Company not found.</div>;
+  if (!data?.found) return <div className="p-8 text-center text-[var(--color-text-secondary)]">Company not found or not yet scanned.</div>;
 
-  const stock = data.company;
-  const analysis = data.analysis;
-  const histories = data.history.slice().sort((a, b) => new Date(a.quarter) - new Date(b.quarter));
+  const stock = data.data;
+  const analysis = stock?.analysis || {};
+  const histories = (stock?.holdings_history || []).slice().sort((a, b) => new Date(a.scanned_at) - new Date(b.scanned_at));
   
   // Format data for chart
-  const chartData = histories.map(h => ({
-    name: h.quarter,
-    holding: h.promoter_holding,
-    price: h.avg_price || null 
+  const chartData = (stock?.quarters || []).map((q, idx) => ({
+    name: q,
+    holding: stock.all_holdings && stock.all_holdings[idx] !== undefined ? stock.all_holdings[idx] : null,
+    price: null // Frontend doesn't have live historical price data here yet
   }));
 
   const riskClass = {
-    High: 'risk-badge-high',
-    Medium: 'risk-badge-medium',
-    Low: 'risk-badge-low',
-  }[stock.risk_level] || 'risk-badge-low';
+    High: 'bg-red-500/10 text-red-500',
+    Medium: 'bg-amber-500/10 text-amber-500',
+    Low: 'bg-emerald-500/10 text-emerald-500',
+  }[analysis?.risk_level || 'Low'] || 'bg-emerald-500/10 text-emerald-500';
 
   const verdictColors = {
     Exit: 'text-[var(--color-verdict-exit)] bg-[var(--color-verdict-exit)]/10',
@@ -70,22 +70,22 @@ export default function CompanyDetail() {
           <div className="flex items-center gap-3 mb-2">
             <h1 className="text-3xl font-bold tracking-tight">{stock.ticker}</h1>
             <span className={`px-3 py-1 rounded-full text-sm font-medium ${riskClass}`}>
-              {stock.risk_level} Risk ({stock.risk_score}/100)
+              {analysis?.risk_level || 'Low'} Risk ({analysis?.risk_score || 50}/100)
             </span>
           </div>
           <p className="text-[var(--color-text-secondary)] text-lg">{stock.company_name}</p>
           <div className="flex gap-4 mt-4 text-sm text-[var(--color-text-muted)]">
             <span>Market Cap: <strong className="text-[var(--color-text-primary)]">{stock.market_cap || 'N/A'}</strong></span>
-            <span>Sector: <strong className="text-[var(--color-text-primary)]">{stock.sector || 'N/A'}</strong></span>
+            <span>Exchange: <strong className="text-[var(--color-text-primary)]">{stock.exchange || 'NSE'}</strong></span>
           </div>
         </div>
         
         <div className="flex flex-col items-end shrink-0">
           <div className="text-sm text-[var(--color-text-secondary)] mb-1">Current Promoter Holding</div>
-          <div className="text-4xl font-light mb-2">{stock.promoter_current?.toFixed(2)}%</div>
-          <div className={`flex items-center gap-1.5 font-medium ${stock.promoter_change < 0 ? 'text-[var(--color-accent-red)]' : 'text-[var(--color-accent-emerald)]'}`}>
-            {stock.promoter_change < 0 ? <TrendingDown className="w-4 h-4" /> : <TrendingUp className="w-4 h-4" />}
-            {stock.promoter_change?.toFixed(2)}% change
+          <div className="text-4xl font-light mb-2">{(stock.promoter_current || 0).toFixed(2)}%</div>
+          <div className={`flex items-center gap-1.5 font-medium ${(stock.promoter_change || 0) < 0 ? 'text-[var(--color-accent-red)]' : 'text-[var(--color-accent-emerald)]'}`}>
+            {(stock.promoter_change || 0) < 0 ? <TrendingDown className="w-4 h-4" /> : <TrendingUp className="w-4 h-4" />}
+            {Math.abs(stock.promoter_change || 0).toFixed(2)}% change
           </div>
         </div>
       </div>
@@ -95,25 +95,21 @@ export default function CompanyDetail() {
         <div className="lg:col-span-2 glass-card p-6 min-h-[400px]">
           <h2 className="text-lg font-semibold mb-6 flex items-center gap-2">
             <Activity className="w-5 h-5 text-[var(--color-accent-blue)]" />
-            Holding Trend vs Price
+            Holding Trend History
           </h2>
           <div className="h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={chartData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border-light)" vertical={false} />
                 <XAxis dataKey="name" stroke="var(--color-text-muted)" fontSize={12} tickMargin={10} />
-                <YAxis yAxisId="left" domain={['auto', 'auto']} stroke="var(--color-accent-blue)" fontSize={12} tickFormatter={val => `${val}%`} />
-                <YAxis yAxisId="right" orientation="right" domain={['auto', 'auto']} stroke="var(--color-accent-amber)" fontSize={12} tickFormatter={val => `₹${val}`} />
+                <YAxis domain={[0, 100]} stroke="var(--color-accent-blue)" fontSize={12} tickFormatter={val => `${val}%`} />
                 <Tooltip 
                   contentStyle={{ backgroundColor: 'var(--color-bg-card)', borderColor: 'var(--color-border)', borderRadius: '8px' }}
                   itemStyle={{ fontSize: '13px' }}
                   labelStyle={{ color: 'var(--color-text-secondary)', marginBottom: '4px' }}
                 />
                 <Legend iconType="circle" wrapperStyle={{ fontSize: '12px' }}/>
-                <Line yAxisId="left" type="monotone" dataKey="holding" name="Promoter Holding (%)" stroke="var(--color-accent-blue)" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} />
-                {chartData.some(d => d.price) && (
-                  <Line yAxisId="right" type="monotone" dataKey="price" name="Avg Price (₹)" stroke="var(--color-accent-amber)" strokeWidth={2} dot={false} />
-                )}
+                <Line type="monotone" dataKey="holding" name="Promoter Holding (%)" stroke="var(--color-accent-blue)" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} />
               </LineChart>
             </ResponsiveContainer>
           </div>
@@ -128,8 +124,8 @@ export default function CompanyDetail() {
               AI Verdict
             </h2>
             <div className="mb-6">
-              <span className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-lg font-bold ${verdictColors[stock.verdict] || verdictColors.Hold}`}>
-                {stock.verdict_icon} {stock.verdict}
+              <span className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-lg font-bold ${verdictColors[analysis?.verdict] || verdictColors.Hold}`}>
+                {analysis?.verdict_icon || '🟡'} {analysis?.verdict || 'Hold'}
               </span>
             </div>
             {analysis?.summary ? (
