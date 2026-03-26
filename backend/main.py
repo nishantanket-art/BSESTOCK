@@ -38,8 +38,8 @@ app = FastAPI(
 # CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.CORS_ORIGINS,
-    allow_credentials=True,
+    allow_origins=["*"], # Allow all for Render deployments
+    allow_credentials=False, # Required when origins are ["*"]
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -64,3 +64,11 @@ async def root():
 @app.get("/health")
 async def health():
     return {"status": "ok"}
+
+
+if __name__ == "__main__":
+    import uvicorn
+    import os
+    # Render provides the PORT environment variable natively
+    port = int(os.environ.get("PORT", 8000))
+    uvicorn.run("backend.main:app", host="0.0.0.0", port=port)
