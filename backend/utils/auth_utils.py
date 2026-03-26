@@ -45,37 +45,35 @@ def decode_token(token: str) -> Optional[dict]:
 
 
 async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
-    """FastAPI dependency: extract and validate JWT, return user doc."""
+    """FastAPI dependency: Returns a dummy user to allow anonymous access."""
+    # Dummy user for anonymous access
+    dummy_user = {
+        "_id": "000000000000000000000000",
+        "username": "demo_user",
+        "display_name": "Demo User",
+        "is_active": True
+    }
+    
     if credentials is None:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
+        return dummy_user
 
     payload = decode_token(credentials.credentials)
     if payload is None:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid or expired token")
+        return dummy_user
 
-    db = get_db()
-    from bson import ObjectId
-    user = await db.users.find_one({"_id": ObjectId(payload["sub"])})
-    if user is None:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found")
-
-    user["_id"] = str(user["_id"])
-    return user
-
-
-async def get_optional_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
-    """FastAPI dependency: return user if authenticated, None otherwise."""
-    if credentials is None:
-        return None
     try:
-        payload = decode_token(credentials.credentials)
-        if payload is None:
-            return None
         db = get_db()
         from bson import ObjectId
         user = await db.users.find_one({"_id": ObjectId(payload["sub"])})
-        if user:
-            user["_id"] = str(user["_id"])
+        if user is None:
+            return dummy_user
+
+        user["_id"] = str(user["_id"])
         return user
     except Exception:
-        return None
+        return dummy_user
+
+
+async def get_optional_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
+    """FastAPI dependency: returns user if authenticated, else dummy user."""
+    return await get_current_user(credentials)

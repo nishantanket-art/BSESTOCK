@@ -91,49 +91,43 @@ export default function Navbar() {
           </div>
         </form>
 
+        {/* Run Scan Button */}
+        {scanStatus?.status !== 'running' && (
+          <button
+            onClick={async () => {
+              try {
+                await scannerAPI.run();
+                toast.success('Scan started');
+              } catch (e) {
+                toast.error('Failed to start scan');
+              }
+            }}
+            className="hidden lg:flex items-center gap-1.5 px-3 py-2 rounded-lg bg-[var(--color-accent-blue)]/10 text-[var(--color-accent-blue)] hover:bg-[var(--color-accent-blue)]/20 transition text-sm font-medium"
+          >
+            <RefreshCw className="w-4 h-4" />
+            Run Scan
+          </button>
+        )}
+
         {/* Scan Status */}
         {scanStatus?.status === 'running' && (
-          <div className="flex items-center gap-2 text-xs text-[var(--color-accent-amber)]">
+          <div className="flex items-center gap-2 text-xs text-[var(--color-accent-amber)] bg-amber-500/10 px-3 py-2 rounded-lg border border-amber-500/20">
             <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-            <span className="hidden sm:inline">
+            <span className="hidden sm:inline font-medium">
               Scanning {scanStatus.current_ticker}... ({scanStatus.progress}/{scanStatus.total})
             </span>
           </div>
         )}
 
-        {/* User Menu */}
-        <div className="relative">
-          <button
-            onClick={() => setShowUserMenu(!showUserMenu)}
-            className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-white/5 transition text-sm"
-          >
-            <div className="w-7 h-7 rounded-full bg-gradient-to-br from-[var(--color-accent-blue)] to-[var(--color-accent-purple)] flex items-center justify-center">
-              <User className="w-3.5 h-3.5 text-white" />
-            </div>
-            <span className="hidden sm:inline text-[var(--color-text-secondary)]">
-              {user?.display_name || user?.username}
-            </span>
-            <ChevronDown className="w-3.5 h-3.5 text-[var(--color-text-muted)]" />
-          </button>
-
-          {showUserMenu && (
-            <>
-              <div className="fixed inset-0 z-40" onClick={() => setShowUserMenu(false)} />
-              <div className="absolute right-0 mt-2 w-48 glass-card border border-[var(--color-border)] rounded-lg py-1 z-50">
-                <div className="px-4 py-2 border-b border-[var(--color-border)]">
-                  <p className="text-sm font-medium">{user?.display_name || user?.username}</p>
-                  <p className="text-xs text-[var(--color-text-muted)]">@{user?.username}</p>
-                </div>
-                <button
-                  onClick={handleLogout}
-                  className="w-full flex items-center gap-2 px-4 py-2 text-sm text-[var(--color-accent-red)] hover:bg-white/5 transition"
-                >
-                  <LogOut className="w-4 h-4" />
-                  Sign Out
-                </button>
-              </div>
-            </>
-          )}
+        {/* User Info (Demo Mode) */}
+        <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-sm">
+          <div className="w-7 h-7 rounded-full bg-gradient-to-br from-[var(--color-accent-blue)] to-[var(--color-accent-purple)] flex items-center justify-center">
+            <User className="w-3.5 h-3.5 text-white" />
+          </div>
+          <div className="flex flex-col">
+            <span className="text-[var(--color-text-primary)] font-medium leading-none mb-0.5">Guest User</span>
+            <span className="text-[var(--color-text-muted)] text-[10px] uppercase tracking-wider">Demo Mode</span>
+          </div>
         </div>
       </div>
     </nav>

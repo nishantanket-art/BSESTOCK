@@ -57,29 +57,12 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
           
-          <Route path="/" element={
-            <PrivateRoute>
-              <AppLayout><Dashboard /></AppLayout>
-            </PrivateRoute>
-          } />
+          <Route path="/" element={<AppLayout><Dashboard /></AppLayout>} />
+          <Route path="/company/:ticker" element={<AppLayout><CompanyDetail /></AppLayout>} />
+          <Route path="/watchlist" element={<AppLayout><Watchlist /></AppLayout>} />
+          <Route path="/alerts" element={<AppLayout><Alerts /></AppLayout>} />
           
-          <Route path="/company/:ticker" element={
-            <PrivateRoute>
-              <AppLayout><CompanyDetail /></AppLayout>
-            </PrivateRoute>
-          } />
-          
-          <Route path="/watchlist" element={
-            <PrivateRoute>
-              <AppLayout><Watchlist /></AppLayout>
-            </PrivateRoute>
-          } />
-          
-          <Route path="/alerts" element={
-            <PrivateRoute>
-              <AppLayout><Alerts /></AppLayout>
-            </PrivateRoute>
-          } />
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Router>
     </AuthProvider>

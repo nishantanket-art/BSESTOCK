@@ -1,8 +1,19 @@
-import traceback
+import uvicorn
+import sys
+import os
 
-try:
-    import uvicorn
-    uvicorn.run("backend.main:app", host="127.0.0.1", port=8000, log_level="debug")
-except Exception as e:
-    with open("crash_debug.txt", "w") as f:
-        f.write("CRASHED:\n" + traceback.format_exc())
+# Add current directory to path so backend can be found
+sys.path.append(os.getcwd())
+
+if __name__ == "__main__":
+    print("Starting PromoterAI Backend...")
+    try:
+        config = uvicorn.Config("backend.main:app", host="127.0.0.1", port=8001, log_level="debug", reload=False)
+        server = uvicorn.Server(config)
+        server.run()
+    except SystemExit as se:
+        print(f"Server exited with SystemExit: {se}")
+    except Exception as e:
+        print(f"FAILED TO START SERVER: {e}")
+        import traceback
+        traceback.print_exc()

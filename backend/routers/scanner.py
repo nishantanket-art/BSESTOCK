@@ -60,11 +60,19 @@ async def _run_scan_pipeline():
             print("[INFO] No sellers found in scan")
             return
 
+        # Step 2: AI Analysis
+        analyzed = await ai_analyze_all(sellers)
+
         # Step 3: Risk Scoring & Price Correlation
         sem = asyncio.Semaphore(5)
 
         async def enrich_item(item):
             async with sem:
+                # Ensure analysis field exists even if AI failed
+                if "analysis" not in item:
+                    from backend.services.analyzer import analyze_company
+                    item["analysis"] = analyze_company(item)
+                
                 quarters = item.get("quarters", [])
                 if quarters:
                     prices = await get_historical_prices_inlined(item["ticker"], quarters)

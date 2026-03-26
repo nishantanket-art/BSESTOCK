@@ -17,25 +17,21 @@ from backend.routers import auth, stocks, watchlist, alerts, scanner
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Application lifecycle: startup and shutdown."""
-    # Startup
-    try:
-        await connect_db()
-        # start_scheduler()
-        print("\n" + "=" * 60)
-        print("  [*] PROMOTER STAKE AI PLATFORM")
-        print("  [>] API: http://localhost:8001")
-        print("  [>] Docs: http://localhost:8001/docs")
-        print("=" * 60 + "\n")
-    except Exception as e:
-        print(f"[CRITICAL] Startup failed: {e}")
-        import traceback
-        traceback.print_exc()
-        
+    """Simplified lifespan for stability."""
+    await connect_db()
     yield
+    try:
+        await close_db()
+    except:
+        pass
     # Shutdown
     try:
+        from backend.services.scheduler import stop_scheduler
         stop_scheduler()
+    except Exception:
+        pass
+    
+    try:
         await close_db()
     except Exception as e:
         print(f"[ERROR] Shutdown error: {e}")

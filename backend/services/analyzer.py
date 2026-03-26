@@ -66,13 +66,13 @@ def compute_verdict(promoter_current: float, change_abs: float, category: str) -
             return VERDICT_MAP["caution"]
         return VERDICT_MAP["hold"]
     elif category == "medium_selloff":
-        if promoter_current > 60:
+        if promoter_current > 65:
             return VERDICT_MAP["buy"]
         elif promoter_current > 50:
             return VERDICT_MAP["hold"]
         return VERDICT_MAP["caution"]
-    else:
-        if promoter_current > 55:
+    else: # small_selloff
+        if promoter_current > 40:
             return VERDICT_MAP["buy"]
         return VERDICT_MAP["hold"]
 
