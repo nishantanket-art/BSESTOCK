@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { watchlistAPI } from '../services/api';
 import StockCard from '../components/StockCard';
-import { Eye, Info } from 'lucide-react';
+import SkeletonCard from '../components/SkeletonCard';
+import { Eye, Info, Activity } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export default function Watchlist() {
@@ -15,9 +16,11 @@ export default function Watchlist() {
   const fetchWatchlist = async () => {
     try {
       const res = await watchlistAPI.get();
-      setStocks(res.data);
+      // The API returns { count, watchlist: [...] }
+      setStocks(res.data.watchlist || []);
     } catch (err) {
       toast.error('Failed to load watchlist');
+      setStocks([]);
     } finally {
       setLoading(false);
     }
@@ -46,8 +49,8 @@ export default function Watchlist() {
       </div>
 
       {loading ? (
-        <div className="flex items-center justify-center py-20">
-          <div className="w-8 h-8 border-2 border-[var(--color-accent-blue)] border-t-transparent rounded-full animate-spin" />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          {[1, 2, 3, 4].map(i => <SkeletonCard key={i} />)}
         </div>
       ) : stocks.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
@@ -60,12 +63,18 @@ export default function Watchlist() {
           ))}
         </div>
       ) : (
-        <div className="glass-card p-12 text-center max-w-md mx-auto">
-          <Info className="w-12 h-12 text-[var(--color-text-muted)] mx-auto mb-4" />
-          <h3 className="text-lg font-medium mb-2">Your watchlist is empty</h3>
-          <p className="text-[var(--color-text-secondary)] text-sm mb-6">
-            Keep an eye on critical stock movements by adding companies from the dashboard.
+        <div className="glass-card-transparent p-12 flex flex-col items-center justify-center text-center max-w-2xl mx-auto mt-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
+          <div className="w-20 h-20 rounded-full bg-[var(--color-bg-secondary)] flex items-center justify-center mb-6">
+            <Eye className="w-10 h-10 text-[var(--color-text-muted)] opacity-50" />
+          </div>
+          <h3 className="text-xl font-bold text-[var(--color-text-primary)] mb-3">Your watchlist is empty</h3>
+          <p className="text-[var(--color-text-secondary)] text-base max-w-md mb-8">
+            Keep an eye on critical stock movements and insider dilution by adding companies from the market dashboard.
           </p>
+          <a href="/" className="px-6 py-2.5 bg-[var(--color-accent-blue)] hover:bg-blue-600 text-white font-medium rounded-lg transition-colors flex items-center gap-2">
+            <Activity className="w-4 h-4" />
+            Explore Dashboard
+          </a>
         </div>
       )}
     </div>

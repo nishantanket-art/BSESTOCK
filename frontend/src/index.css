@@ -1,35 +1,38 @@
 @import "tailwindcss";
 
 @theme {
-  --color-bg-primary: #0a0e1a;
-  --color-bg-secondary: #111827;
-  --color-bg-card: #1a1f35;
-  --color-bg-card-hover: #1f2642;
-  --color-bg-glass: rgba(26, 31, 53, 0.7);
-  --color-border: #2a3150;
-  --color-border-light: #3a4570;
+  --color-bg-primary: #0d1117;
+  --color-bg-secondary: #010409;
+  --color-bg-card: #161b22;
+  --color-bg-card-hover: #1f242d;
+  --color-bg-glass: rgba(22, 27, 34, 0.7);
+  --color-border: #30363d;
+  --color-border-light: #484f58;
 
-  --color-accent-blue: #3b82f6;
-  --color-accent-cyan: #06b6d4;
-  --color-accent-emerald: #10b981;
-  --color-accent-amber: #f59e0b;
-  --color-accent-red: #ef4444;
-  --color-accent-purple: #8b5cf6;
+  --color-accent-blue: #2962ff;
+  --color-accent-cyan: #00b0ff;
+  --color-accent-emerald: #00c853;
+  --color-accent-amber: #ffab00;
+  --color-accent-red: #ff5252;
+  --color-accent-purple: #7c4dff;
 
-  --color-text-primary: #f1f5f9;
-  --color-text-secondary: #94a3b8;
-  --color-text-muted: #64748b;
+  --color-text-primary: #e6edf3;
+  --color-text-secondary: #8b949e;
+  --color-text-muted: #6e7681;
 
-  --color-risk-high: #ef4444;
-  --color-risk-medium: #f59e0b;
-  --color-risk-low: #10b981;
-  --color-verdict-exit: #ef4444;
-  --color-verdict-caution: #f97316;
-  --color-verdict-hold: #eab308;
-  --color-verdict-buy: #10b981;
+  --color-risk-high: #ff5252;
+  --color-risk-medium: #ffab00;
+  --color-risk-low: #00c853;
+  
+  --color-verdict-exit: #ff5252;
+  --color-verdict-caution: #ffab00;
+  --color-verdict-hold: #e6edf3;
+  --color-verdict-buy: #00c853;
 }
 
 @layer base {
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
   * {
     box-sizing: border-box;
     margin: 0;
@@ -39,51 +42,41 @@
   body {
     background-color: var(--color-bg-primary);
     color: var(--color-text-primary);
-    font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
     min-height: 100vh;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
 
   ::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
+    width: 8px;
+    height: 8px;
   }
   ::-webkit-scrollbar-track {
-    background: var(--color-bg-secondary);
+    background: var(--color-bg-primary);
   }
   ::-webkit-scrollbar-thumb {
+    background: var(--color-border);
+    border-radius: 4px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
     background: var(--color-border-light);
-    border-radius: 3px;
   }
 }
 
 @layer utilities {
   .glass-card {
+    background: var(--color-bg-card);
+    border: 1px solid var(--color-border);
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  }
+  
+  .glass-card-transparent {
     background: var(--color-bg-glass);
     backdrop-filter: blur(12px);
     border: 1px solid var(--color-border);
     border-radius: 12px;
-  }
-
-  .gradient-border {
-    border-image: linear-gradient(135deg, var(--color-accent-blue), var(--color-accent-cyan)) 1;
-  }
-
-  .glow-blue {
-    box-shadow: 0 0 20px rgba(59, 130, 246, 0.15);
-  }
-
-  .glow-emerald {
-    box-shadow: 0 0 20px rgba(16, 185, 129, 0.15);
-  }
-
-  .glow-red {
-    box-shadow: 0 0 20px rgba(239, 68, 68, 0.15);
-  }
-
-  .animate-pulse-slow {
-    animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
   }
 
   .text-gradient {
@@ -94,20 +87,32 @@
   }
 
   .risk-badge-high {
-    background: rgba(239, 68, 68, 0.15);
+    background: rgba(255, 82, 82, 0.1);
     color: var(--color-risk-high);
-    border: 1px solid rgba(239, 68, 68, 0.3);
+    border: 1px solid rgba(255, 82, 82, 0.2);
   }
 
   .risk-badge-medium {
-    background: rgba(245, 158, 11, 0.15);
+    background: rgba(255, 171, 0, 0.1);
     color: var(--color-risk-medium);
-    border: 1px solid rgba(245, 158, 11, 0.3);
+    border: 1px solid rgba(255, 171, 0, 0.2);
   }
 
   .risk-badge-low {
-    background: rgba(16, 185, 129, 0.15);
+    background: rgba(0, 200, 83, 0.1);
     color: var(--color-risk-low);
-    border: 1px solid rgba(16, 185, 129, 0.3);
+    border: 1px solid rgba(0, 200, 83, 0.2);
+  }
+
+  /* Skeleton Loading Utilities */
+  .skeleton-bg {
+    background: linear-gradient(90deg, var(--color-bg-card) 25%, var(--color-border) 50%, var(--color-bg-card) 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite linear;
+  }
+
+  @keyframes shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
   }
 }

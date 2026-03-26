@@ -3,7 +3,6 @@ main.py
 FastAPI application entry point.
 """
 
-import sys
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
@@ -11,30 +10,22 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from backend.config import settings
 from backend.database import connect_db, close_db
-from backend.services.scheduler import start_scheduler, stop_scheduler
 from backend.routers import auth, stocks, watchlist, alerts, scanner
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Simplified lifespan for stability."""
-    await connect_db()
+    """Application lifespan: connect DB on start, close on shutdown."""
+    try:
+        await connect_db()
+        print("[OK] Application started successfully")
+    except Exception as e:
+        print(f"[WARNING] Startup error (non-fatal): {e}")
     yield
     try:
         await close_db()
-    except:
-        pass
-    # Shutdown
-    try:
-        from backend.services.scheduler import stop_scheduler
-        stop_scheduler()
-    except Exception:
-        pass
-    
-    try:
-        await close_db()
     except Exception as e:
-        print(f"[ERROR] Shutdown error: {e}")
+        print(f"[WARNING] Shutdown error: {e}")
 
 
 app = FastAPI(

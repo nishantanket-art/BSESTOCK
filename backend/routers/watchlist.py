@@ -44,7 +44,7 @@ async def get_watchlist(current_user=Depends(get_current_user)):
             "last_scanned": company.get("last_scanned") if company else None,
         })
 
-    return {"count": len(results), "watchlist": results}
+    return results
 
 
 @router.post("")

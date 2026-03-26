@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { stocksAPI, watchlistAPI, scannerAPI } from '../services/api';
 import StockCard from '../components/StockCard';
-import { Filter, Search, TrendingUp, AlertTriangle, Info, Play } from 'lucide-react';
+import SkeletonCard from '../components/SkeletonCard';
+import { Filter, Search, TrendingUp, TrendingDown, AlertTriangle, Info, Play, Activity } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export default function Dashboard() {
@@ -38,11 +39,12 @@ export default function Dashboard() {
       
       const [stocksRes, watchlistRes] = await Promise.all([
         stocksAPI.list(params),
-        watchlistAPI.get()
+        watchlistAPI.get().catch(() => ({ data: [] }))
       ]);
       
       setStocks(stocksRes.data.results || []);
-      setWatchlist(new Set(watchlistRes.data.map(item => item.ticker)));
+      const wlData = Array.isArray(watchlistRes.data) ? watchlistRes.data : [];
+      setWatchlist(new Set(wlData.map(item => item.ticker)));
     } catch (err) {
       console.error(err);
       toast.error('Failed to load stocks data');
@@ -144,19 +146,54 @@ export default function Dashboard() {
       </div>
 
       {loading ? (
-        <div className="flex items-center justify-center py-20">
-          <div className="w-8 h-8 border-2 border-[var(--color-accent-blue)] border-t-transparent rounded-full animate-spin" />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          {[1, 2, 3, 4, 5, 6, 7, 8].map(i => <SkeletonCard key={i} />)}
         </div>
       ) : stocks.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          {stocks.map(stock => (
-            <StockCard 
-              key={stock.ticker} 
-              stock={{...stock, in_watchlist: watchlist.has(stock.ticker)}} 
-              onToggleWatchlist={toggleWatchlist}
-            />
-          ))}
-        </div>
+        <>
+          {/* Top Movers Section */}
+          {!filters.search && !filters.riskLevel && !filters.verdict && stocks.length >= 4 && (
+            <div className="mb-8 hidden sm:block">
+              <h2 className="text-lg font-semibold text-[var(--color-text-primary)] mb-4 flex items-center gap-2">
+                <Activity className="w-5 h-5 text-[var(--color-accent-blue)]" />
+                Market Highlights
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="glass-card-transparent p-4 flex flex-col gap-3">
+                  <div className="flex items-center gap-2 text-[var(--color-accent-emerald)] font-medium text-sm">
+                    <TrendingUp className="w-4 h-4" /> Top Accumulation
+                  </div>
+                  <div className="space-y-2">
+                    {stocks.filter(s => s.promoter_change > 0).sort((a,b) => b.promoter_change - a.promoter_change).slice(0, 2).map(s => (
+                       <StockCard key={s.ticker} stock={{...s, in_watchlist: watchlist.has(s.ticker)}} onToggleWatchlist={toggleWatchlist} />
+                    ))}
+                  </div>
+                </div>
+                <div className="glass-card-transparent p-4 flex flex-col gap-3">
+                  <div className="flex items-center gap-2 text-[var(--color-accent-red)] font-medium text-sm">
+                    <TrendingDown className="w-4 h-4" /> Top Dilution
+                  </div>
+                  <div className="space-y-2">
+                    {stocks.filter(s => s.promoter_change < 0).sort((a,b) => a.promoter_change - b.promoter_change).slice(0, 2).map(s => (
+                       <StockCard key={s.ticker} stock={{...s, in_watchlist: watchlist.has(s.ticker)}} onToggleWatchlist={toggleWatchlist} />
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <h2 className="text-lg font-semibold text-[var(--color-text-primary)] mb-4">All Monitored Stocks</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {stocks.map(stock => (
+              <StockCard 
+                key={stock.ticker} 
+                stock={{...stock, in_watchlist: watchlist.has(stock.ticker)}} 
+                onToggleWatchlist={toggleWatchlist}
+              />
+            ))}
+          </div>
+        </>
       ) : (
         <div className="glass-card p-8 text-center bg-[var(--color-bg-card)]">
           <Info className="w-12 h-12 text-[var(--color-text-muted)] mx-auto mb-4" />

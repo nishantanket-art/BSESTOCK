@@ -174,6 +174,6 @@ async def trigger_reanalysis(current_user=Depends(get_current_user)):
 
 
 @router.get("/status")
-async def scan_status():
+async def scan_status_endpoint():
     """Get current scan progress."""
     return get_scan_status()
