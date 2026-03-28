@@ -47,11 +47,13 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "*", 
+        "https://bsestock-frontend.onrender.com",
         "https://bsestock-ui.onrender.com",
+        "https://bsestock.onrender.com",
         "http://localhost:5173",
-        "http://localhost:3000"
+        "http://localhost:3000",
     ], 
-    allow_credentials=False,
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )

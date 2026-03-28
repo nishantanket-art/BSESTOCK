@@ -218,3 +218,41 @@ async def get_trend_data():
         "holding_data": holding_data,
         "scan_history": scan_logs,
     }
+@router.get("/prices")
+async def get_batch_prices(tickers: str = Query(..., description="Comma separated tickers (e.g. RELIANCE,TCS)")):
+    """Batch fetch real-time prices for list of tickers."""
+    import yfinance as yf
+    import asyncio
+    
+    ticker_list = [t.strip().upper() for t in tickers.split(",") if t.strip()]
+    if not ticker_list:
+        return {}
+        
+    results = {}
+    
+    def fetch_price(symbol):
+        try:
+            # Append .NS for Indian stocks if missing
+            yf_symbol = symbol if symbol.endswith(".NS") else f"{symbol}.NS"
+            t = yf.Ticker(yf_symbol)
+            # Use fast_info for performance
+            price = t.fast_info.get("last_price")
+            if price is None:
+                # Fallback to history
+                hist = t.history(period="1d")
+                if not hist.empty:
+                    price = hist["Close"].iloc[-1]
+            return symbol, price
+        except Exception as e:
+            print(f"Error fetching {symbol}: {e}")
+            return symbol, None
+
+    # Fetch Prices in parallel using asyncio to run blocking yf calls in thread pool
+    loop = asyncio.get_event_loop()
+    tasks = [loop.run_in_executor(None, fetch_price, s) for s in ticker_list]
+    price_results = await asyncio.gather(*tasks)
+    
+    for symbol, price in price_results:
+        results[symbol] = round(price, 2) if price else None
+        
+    return results
