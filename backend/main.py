@@ -45,8 +45,13 @@ app = FastAPI(
 # CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], # Allow all for Render deployments
-    allow_credentials=False, # Required when origins are ["*"]
+    allow_origins=[
+        "*", 
+        "https://bsestock-ui.onrender.com",
+        "http://localhost:5173",
+        "http://localhost:3000"
+    ], 
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )

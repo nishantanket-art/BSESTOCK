@@ -46,8 +46,13 @@ export default function Dashboard() {
       const wlData = Array.isArray(watchlistRes.data) ? watchlistRes.data : [];
       setWatchlist(new Set(wlData.map(item => item.ticker)));
     } catch (err) {
-      console.error(err);
-      toast.error('Failed to load stocks data');
+      console.error("[StoXeye] API Fetch Error:", {
+        message: err.message,
+        url: err.config?.url,
+        status: err.response?.status,
+        data: err.response?.data
+      });
+      toast.error('Failed to connect to API server');
     } finally {
       setLoading(false);
     }
@@ -164,7 +169,7 @@ export default function Dashboard() {
                     <TrendingUp className="w-4 h-4" /> Top Accumulation
                   </div>
                   <div className="space-y-2">
-                    {stocks.filter(s => s.promoter_change > 0).sort((a,b) => b.promoter_change - a.promoter_change).slice(0, 2).map(s => (
+                    {stocks.filter(s => Number(s.promoter_change) > 0).sort((a,b) => Number(b.promoter_change) - Number(a.promoter_change)).slice(0, 2).map(s => (
                        <StockCard key={s.ticker} stock={{...s, in_watchlist: watchlist.has(s.ticker)}} onToggleWatchlist={toggleWatchlist} />
                     ))}
                   </div>
@@ -174,7 +179,7 @@ export default function Dashboard() {
                     <TrendingDown className="w-4 h-4" /> Top Dilution
                   </div>
                   <div className="space-y-2">
-                    {stocks.filter(s => s.promoter_change < 0).sort((a,b) => a.promoter_change - b.promoter_change).slice(0, 2).map(s => (
+                    {stocks.filter(s => Number(s.promoter_change) < 0).sort((a,b) => Number(a.promoter_change) - Number(b.promoter_change)).slice(0, 2).map(s => (
                        <StockCard key={s.ticker} stock={{...s, in_watchlist: watchlist.has(s.ticker)}} onToggleWatchlist={toggleWatchlist} />
                     ))}
                   </div>

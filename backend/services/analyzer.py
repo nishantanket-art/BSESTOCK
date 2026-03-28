@@ -149,12 +149,88 @@ def get_recommendation(verdict_label: str) -> str:
     }
     return recs.get(verdict_label, recs["Hold"])
 
+def safe_float(val, default=0.0):
+    try:
+        if val is None or val == "Pending": return default
+        return float(val)
+    except (ValueError, TypeError):
+        return default
 
 def analyze_company(company_data: dict) -> dict:
     """Run full rule-based analysis on a company."""
-    change_abs = company_data.get("promoter_change_abs", 0)
-    promoter_current = company_data.get("promoter_current", 0)
+    # Better Pending Detection
+    is_missing = (
+        "promoter_current" not in company_data or 
+        company_data.get("promoter_current") is None or
+        "promoter_change" not in company_data or
+        company_data.get("promoter_change") == "Pending"
+    )
+    
+    if is_missing:
+        return {
+            "category": "pending",
+            "summary": "Data collection pending. Please run a scan to fetch latest promoter holding data.",
+            "reasons": [],
+            "mode_of_selling": "N/A",
+            "sentiment": "Neutral",
+            "sentiment_color": "#94a3b8",
+            "verdict": "Pending",
+            "verdict_color": "#94a3b8",
+            "verdict_icon": "⏳",
+            "verdict_desc": "Scan required",
+            "risk_level": "Pending",
+            "risk_color": "#94a3b8",
+            "risk_icon": "⏳",
+            "risk_score": 0,
+            "intent_confidence": "N/A",
+            "intent_is_trend": False,
+            "intent_trend_label": "N/A",
+            "intent_pattern": "N/A",
+            "impact_governance": "N/A",
+            "impact_perception": "N/A",
+            "impact_short_term": "N/A",
+            "impact_long_term": "N/A",
+            "recommendation": "Run a scan to analyze.",
+            "analyzed_at": datetime.now().strftime("%d %b %Y, %I:%M %p"),
+        }
+
+    promoter_current = safe_float(company_data.get("promoter_current"))
+    change_abs = safe_float(company_data.get("promoter_change_abs"))
     all_holdings = company_data.get("all_holdings", [])
+    
+    # Handle Professionally Managed Companies (like HDFC Bank, ICICI Bank)
+    fii = safe_float(company_data.get("fii_current"))
+    dii = safe_float(company_data.get("dii_current"))
+    
+    if promoter_current < 1.0 and (fii > 10.0 or dii > 10.0):
+        return {
+            "category": "managed",
+            "summary": f"Professionally managed institution. Low promoter reliance with high institutional backing (FII: {fii}%, DII: {dii}%).",
+            "reasons": ["Institutional Governance", "Publicly Held", "Diversified Ownership"],
+            "mode_of_selling": "N/A",
+            "sentiment": "Bullish",
+            "sentiment_color": "#3b82f6",
+            "verdict": "Institutional",
+            "verdict_color": "#3b82f6",
+            "verdict_icon": "🏛️",
+            "verdict_desc": "Professionally managed",
+            "risk_level": "Managed",
+            "risk_color": "#a855f7",
+            "risk_icon": "🛡️",
+            "risk_score": 20,
+            "intent_confidence": "High",
+            "intent_is_trend": False,
+            "intent_trend_label": "Managed Stability",
+            "intent_pattern": "Professional institutional holding pattern",
+            "impact_governance": "High",
+            "impact_perception": "Stable/Institutional",
+            "short_term": "Neutral",
+            "long_term": "High Stability",
+            "impact_short_term": "Minimal volatility impact",
+            "impact_long_term": "Long-term institutional foundation",
+            "recommendation": "Fundamentally stable institutional structure.",
+            "analyzed_at": datetime.now().strftime("%d %b %Y, %I:%M %p"),
+        }
 
     category = categorize_selloff(change_abs)
     template = REASON_TEMPLATES[category]
@@ -240,7 +316,7 @@ def generate_insights(results: list[dict]) -> list[dict]:
             "description": "AI recommends exit for these companies due to aggressive promoter selling", "severity": "high",
         })
     if large:
-        avg_drop = sum(r["promoter_change_abs"] for r in large) / len(large)
+        avg_drop = sum(safe_float(r.get("promoter_change_abs")) for r in large) / len(large)
         insights.append({
             "icon": "⚠️", "title": f"Large Sell-offs Averaging {avg_drop:.1f}% Drop",
             "description": f"{len(large)} companies show >3% promoter reduction", "severity": "medium",
@@ -253,7 +329,7 @@ def generate_insights(results: list[dict]) -> list[dict]:
         })
 
     total = len(results)
-    avg_holding = sum(r["promoter_current"] for r in results) / total if total else 0
+    avg_holding = sum(safe_float(r.get("promoter_current")) for r in results) / total if total else 0
     insights.append({
         "icon": "📊", "title": f"{total} Companies Tracked · Avg Holding {avg_holding:.1f}%",
         "description": "Across the universe of NSE/BSE stocks scanned for promoter activity", "severity": "info",

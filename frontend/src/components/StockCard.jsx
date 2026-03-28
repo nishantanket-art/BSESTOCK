@@ -15,6 +15,11 @@ export default function StockCard({ stock, onToggleWatchlist }) {
     Buy: 'text-[var(--color-verdict-buy)]',
   };
 
+  const formatNum = (v, dec=1) => {
+    if (v === null || v === undefined || isNaN(Number(v))) return '—';
+    return Number(v).toFixed(dec);
+  };
+
   return (
     <div className="glass-card p-4 hover:bg-[var(--color-bg-card-hover)] hover:-translate-y-1 hover:shadow-xl hover:border-[var(--color-border-light)] transition-all duration-300 group relative overflow-hidden">
       {/* Accent left border on hover */}
@@ -40,18 +45,18 @@ export default function StockCard({ stock, onToggleWatchlist }) {
           <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs">
             <div className="flex flex-col">
               <span className="text-[10px] text-[var(--color-text-muted)] uppercase tracking-wider mb-0.5">Promoter</span>
-              <span className="text-[var(--color-text-primary)] font-semibold">{stock.promoter_current?.toFixed(1)}%</span>
+              <span className="text-[var(--color-text-primary)] font-semibold">{formatNum(stock.promoter_current)}%</span>
             </div>
             <div className="flex flex-col">
               <span className="text-[10px] text-[var(--color-text-muted)] uppercase tracking-wider mb-0.5">Change</span>
               <div className="flex items-center gap-1">
-                {stock.promoter_change < 0 ? (
+                {Number(stock.promoter_change) < 0 ? (
                   <TrendingDown className="w-3 h-3 text-[var(--color-accent-red)]" />
-                ) : stock.promoter_change > 0 ? (
+                ) : Number(stock.promoter_change) > 0 ? (
                   <TrendingUp className="w-3 h-3 text-[var(--color-accent-emerald)]" />
                 ) : null}
-                <span className={`font-semibold ${stock.promoter_change < 0 ? 'text-[var(--color-accent-red)]' : stock.promoter_change > 0 ? 'text-[var(--color-accent-emerald)]' : 'text-[var(--color-text-secondary)]'}`}>
-                  {stock.promoter_change !== undefined ? `${stock.promoter_change > 0 ? '+' : ''}${stock.promoter_change.toFixed(2)}%` : '0.00%'}
+                <span className={`font-semibold ${Number(stock.promoter_change) < 0 ? 'text-[var(--color-accent-red)]' : Number(stock.promoter_change) > 0 ? 'text-[var(--color-accent-emerald)]' : 'text-[var(--color-text-secondary)]'}`}>
+                  {stock.promoter_change !== 'Pending' && stock.promoter_change !== undefined ? `${Number(stock.promoter_change) > 0 ? '+' : ''}${formatNum(stock.promoter_change, 2)}%` : 'Pending'}
                 </span>
               </div>
             </div>

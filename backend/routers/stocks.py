@@ -64,22 +64,27 @@ async def list_stocks(
     # Format results
     results = []
     for c in companies:
-        analysis = c.get("analysis", {})
+        analysis = c.get("analysis")
+        if not analysis:
+            # On-the-fly analysis for items missing it
+            from backend.services.analyzer import analyze_company
+            analysis = analyze_company(c)
+        
         results.append({
             "ticker": c["ticker"],
             "company_name": c.get("company_name", c["ticker"]),
             "market_cap": c.get("market_cap", "N/A"),
-            "promoter_current": c.get("promoter_current", 0),
-            "promoter_change": c.get("promoter_change"),
-            "risk_level": analysis.get("risk_level", "Low"),
-            "risk_score": analysis.get("risk_score", 50),
-            "risk_color": analysis.get("risk_color", "#00cc88"),
-            "verdict": analysis.get("verdict", "Hold"),
-            "verdict_icon": analysis.get("verdict_icon", "🟡"),
-            "verdict_color": analysis.get("verdict_color", "#ffc107"),
-            "sentiment": analysis.get("sentiment", "Neutral"),
+            "promoter_current": c.get("promoter_current"),
+            "promoter_change": c.get("promoter_change") if c.get("promoter_change") is not None else "Pending",
+            "fii_current": c.get("fii_current", 0),
+            "dii_current": c.get("dii_current", 0),
             "last_scanned": c.get("last_scanned"),
             "in_watchlist": c["ticker"] in watchlist_tickers,
+            "analysis": analysis,
+            # Legacy fields for older UI
+            "risk_level": analysis.get("risk_level", "Low"),
+            "verdict": analysis.get("verdict", "Hold"),
+            "verdict_icon": analysis.get("verdict_icon", "🟡")
         })
 
     # Generate insights
