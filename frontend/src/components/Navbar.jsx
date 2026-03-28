@@ -24,7 +24,7 @@ export default function Navbar() {
     const fetchStocks = async () => {
       try {
         const res = await stocksAPI.list();
-        setAllStocks(res.data);
+        setAllStocks(res.data.results || []);
       } catch (e) { /* silent fail */ }
     };
     fetchStocks();

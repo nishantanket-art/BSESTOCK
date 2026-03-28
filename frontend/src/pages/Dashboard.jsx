@@ -190,7 +190,7 @@ export default function Dashboard() {
 
           <h2 className="text-lg font-semibold text-[var(--color-text-primary)] mb-4">All Monitored Stocks</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {stocks.map(stock => (
+            {stocks.filter(s => s && s.ticker).map(stock => (
               <StockCard 
                 key={stock.ticker} 
                 stock={{...stock, in_watchlist: watchlist.has(stock.ticker)}} 

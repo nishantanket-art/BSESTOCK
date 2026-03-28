@@ -6,6 +6,7 @@ export default function StockCard({ stock, onToggleWatchlist, index = 0 }) {
     High: 'bg-red-500/10 text-red-500 border-red-500/20 shadow-[0_0_15px_-5px_rgba(239,68,68,0.3)]',
     Medium: 'bg-amber-500/10 text-amber-500 border-amber-500/20 shadow-[0_0_15px_-5px_rgba(245,158,11,0.3)]',
     Low: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20 shadow-[0_0_15px_-5px_rgba(16,185,129,0.3)]',
+    Managed: 'bg-purple-500/10 text-purple-400 border-purple-500/20 shadow-[0_0_15px_-5px_rgba(168,85,247,0.3)]',
   }[stock.risk_level] || 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20';
 
   const verdictColor = {
@@ -13,6 +14,7 @@ export default function StockCard({ stock, onToggleWatchlist, index = 0 }) {
     Caution: 'text-[var(--color-accent-amber)]',
     Hold: 'text-[var(--color-text-secondary)]',
     Buy: 'text-[var(--color-accent-emerald)]',
+    Institutional: 'text-blue-400',
   }[stock.verdict] || 'text-[var(--color-text-secondary)]';
 
   const formatNum = (v, dec=1) => {
