@@ -45,16 +45,23 @@ export default function CompanyDetail() {
     holding: stock.all_holdings && stock.all_holdings[idx] !== undefined ? stock.all_holdings[idx] : null,
   }));
 
+  // Safe formatter for numbers
+  const safeFixed = (v, dec = 1) => {
+    const num = Number(v);
+    return isNaN(num) ? '—' : num.toFixed(dec);
+  };
+
   // Mock daily price data for the Area Chart based on the quarterly prices since we don't have daily JSON data in mock DB
   // In production, this would use a real daily timeseries from the backend
   const generatePriceData = () => {
     const dataPoints = timeFilter === '1W' ? 7 : timeFilter === '1M' ? 30 : timeFilter === '3M' ? 90 : 365;
     
     const hasPrices = stock?.all_prices && stock.all_prices.length > 0;
-    const basePrice = hasPrices ? stock.all_prices[stock.all_prices.length - 1] : 1540.50;
+    const lastPrice = stock?.current_price || (hasPrices ? stock.all_prices[stock.all_prices.length - 1] : 1540.50);
+    const basePrice = Number(lastPrice) || 1540.50;
     
     // Generate realistic looking walk sequence
-    let currentPrice = hasPrices ? (stock.all_prices[0] || basePrice) : (basePrice * 0.7);
+    let currentPrice = hasPrices ? (Number(stock.all_prices[0]) || basePrice) : (basePrice * 0.7);
     const result = [];
     const now = new Date();
     
@@ -77,7 +84,7 @@ export default function CompanyDetail() {
       if (hasPrices && i % 90 === 0) {
         const quarterIdx = Math.max(0, stock.all_prices.length - 1 - Math.floor(i / 90));
         if (stock.all_prices[quarterIdx]) {
-           currentPrice = (currentPrice + stock.all_prices[quarterIdx]) / 2;
+           currentPrice = (currentPrice + Number(stock.all_prices[quarterIdx])) / 2;
         }
       }
       
@@ -133,12 +140,12 @@ export default function CompanyDetail() {
         <div className="flex flex-col items-end shrink-0">
           <div className="text-sm text-[var(--color-text-secondary)] mb-1">Current Promoter Holding</div>
           <div className="text-4xl font-light mb-2">
-            {typeof stock.promoter_current === 'number' ? stock.promoter_current.toFixed(2) : '—'}%
+            {safeFixed(stock.promoter_current, 2)}%
           </div>
           <div className={`flex items-center gap-1.5 font-medium ${Number(stock.promoter_change) < 0 ? 'text-[var(--color-accent-red)]' : 'text-[var(--color-accent-emerald)]'}`}>
             {Number(stock.promoter_change) < 0 ? <TrendingDown className="w-4 h-4" /> : <TrendingUp className="w-4 h-4" />}
             {stock.promoter_change !== 'Pending' && stock.promoter_change !== undefined 
-              ? `${Math.abs(Number(stock.promoter_change)).toFixed(2)}% change` 
+              ? `${safeFixed(Math.abs(Number(stock.promoter_change)), 2)}% change` 
               : 'Pending'}
           </div>
         </div>
@@ -205,7 +212,7 @@ export default function CompanyDetail() {
                 <LineChart data={holdingData} margin={{ top: 5, right: 30, left: 0, bottom: 5 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border-light)" vertical={false} opacity={0.5} />
                   <XAxis dataKey="name" stroke="var(--color-text-muted)" fontSize={11} tickMargin={10} />
-                  <YAxis domain={['dataMin - 2', 'dataMax + 2']} stroke="var(--color-text-muted)" fontSize={11} tickFormatter={val => `${val.toFixed(1)}%`} />
+                  <YAxis domain={['dataMin - 2', 'dataMax + 2']} stroke="var(--color-text-muted)" fontSize={11} tickFormatter={val => safeFixed(val, 1) + '%'} />
                   <RechartsTooltip 
                     contentStyle={{ backgroundColor: 'var(--color-bg-card)', borderColor: 'var(--color-border)', borderRadius: '8px' }}
                     itemStyle={{ color: 'var(--color-accent-amber)', fontSize: '13px', fontWeight: 'semibold' }}
