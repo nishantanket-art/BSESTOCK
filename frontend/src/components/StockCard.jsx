@@ -47,18 +47,33 @@ export default function StockCard({ stock, onToggleWatchlist, index = 0 }) {
         </div>
 
         <div className="grid grid-cols-2 gap-3 mb-5">
-          <div className="bg-white/5 border border-white/5 rounded-xl p-3">
-            <p className="text-[10px] text-[var(--color-text-muted)] font-bold uppercase tracking-widest mb-1">STAKE</p>
-            <p className="text-lg font-bold text-white leading-none">{formatNum(stock.promoter_current)}%</p>
-          </div>
-          <div className="bg-white/5 border border-white/5 rounded-xl p-3">
-            <p className="text-[10px] text-[var(--color-text-muted)] font-bold uppercase tracking-widest mb-1">CHG</p>
-            <div className="flex items-center gap-1">
-              <span className={`text-lg font-bold leading-none ${Number(stock.promoter_change) > 0 ? 'text-[var(--color-accent-emerald)]' : Number(stock.promoter_change) < 0 ? 'text-[var(--color-accent-red)]' : 'text-zinc-400'}`}>
-                {Number(stock.promoter_change) > 0 ? '+' : ''}{formatNum(stock.promoter_change, 2)}%
-              </span>
-            </div>
-          </div>
+          {stock.risk_level === 'Managed' ? (
+            <>
+              <div className="bg-purple-500/5 border border-purple-500/10 rounded-xl p-3">
+                <p className="text-[10px] text-purple-400/70 font-bold uppercase tracking-widest mb-1">FII</p>
+                <p className="text-lg font-bold text-white leading-none">{formatNum(stock.fii_current)}%</p>
+              </div>
+              <div className="bg-purple-500/5 border border-purple-500/10 rounded-xl p-3">
+                <p className="text-[10px] text-purple-400/70 font-bold uppercase tracking-widest mb-1">DII</p>
+                <p className="text-lg font-bold text-white leading-none">{formatNum(stock.dii_current)}%</p>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="bg-white/5 border border-white/5 rounded-xl p-3">
+                <p className="text-[10px] text-[var(--color-text-muted)] font-bold uppercase tracking-widest mb-1">STAKE</p>
+                <p className="text-lg font-bold text-white leading-none">{formatNum(stock.promoter_current)}%</p>
+              </div>
+              <div className="bg-white/5 border border-white/5 rounded-xl p-3">
+                <p className="text-[10px] text-[var(--color-text-muted)] font-bold uppercase tracking-widest mb-1">CHG</p>
+                <div className="flex items-center gap-1">
+                  <span className={`text-lg font-bold leading-none ${Number(stock.promoter_change) > 0 ? 'text-[var(--color-accent-emerald)]' : Number(stock.promoter_change) < 0 ? 'text-[var(--color-accent-red)]' : 'text-zinc-400'}`}>
+                    {Number(stock.promoter_change) > 0 ? '+' : ''}{formatNum(stock.promoter_change, 2)}%
+                  </span>
+                </div>
+              </div>
+            </>
+          )}
         </div>
 
         {stock.current_price && (

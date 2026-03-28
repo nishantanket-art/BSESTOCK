@@ -16,7 +16,7 @@ export default function Alerts() {
   const fetchAlerts = async () => {
     try {
       const res = await alertsAPI.get();
-      setAlerts(res.data);
+      setAlerts(res.data.alerts || []);
     } catch (err) {
       toast.error('Failed to load alerts');
     } finally {

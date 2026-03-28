@@ -102,6 +102,12 @@ def _parse_screener_page(html: str, ticker: str) -> dict | None:
     quarters = []
     found_shareholding_section = False
 
+    # Holding Table Data (Promoter, FII, DII, Public)
+    prom_curr, prom_prev = None, None
+    fii_curr, dii_curr, pub_curr = 0.0, 0.0, 0.0
+    all_holdings, quarters = [], []
+    found_shareholding_section = False
+
     for section in soup.find_all("section"):
         heading = section.find(["h2", "h3"])
         if heading and "shareholding" in heading.get_text(strip=True).lower():
@@ -114,48 +120,49 @@ def _parse_screener_page(html: str, ticker: str) -> dict | None:
                     quarters = headers[1:]
                     for row in rows[1:]:
                         cells = row.find_all(["th", "td"])
-                        if not cells:
-                            continue
+                        if not cells: continue
                         label = cells[0].get_text(strip=True).lower()
-                        # Match 'promoter' but not 'pledge' or 'public'
+                        vals = [c.get_text(strip=True).replace("%", "").strip() for c in cells[1:]]
+                        float_vals = []
+                        for v in vals:
+                            try:
+                                if v in ("", "-", "n/a"): float_vals.append(None)
+                                else: float_vals.append(float(v))
+                            except ValueError: float_vals.append(None)
+                        
                         if "promoter" in label and "pledge" not in label:
-                            vals = [c.get_text(strip=True).replace("%", "").strip() for c in cells[1:]]
-                            for v in vals:
-                                try:
-                                    # Handle empty or dash values
-                                    if v in ("", "-", "n/a"):
-                                        all_holdings.append(None)
-                                    else:
-                                        all_holdings.append(float(v))
-                                except ValueError:
-                                    all_holdings.append(None)
-                            
-                            clean = [v for v in all_holdings if v is not None]
-                            if len(clean) >= 2:
-                                promoter_current = clean[-1]
-                                promoter_prev = clean[-2]
-                            elif len(clean) == 1:
-                                promoter_current = clean[0]
-                                promoter_prev = clean[0]
-                            break
+                            all_holdings = float_vals
+                            clean = [v for v in float_vals if v is not None]
+                            if len(clean) >= 2: prom_curr, prom_prev = clean[-1], clean[-2]
+                            elif len(clean) == 1: prom_curr = prom_prev = clean[0]
+                        elif "fii" in label:
+                            clean = [v for v in float_vals if v is not None]
+                            if clean: fii_curr = clean[-1]
+                        elif "dii" in label:
+                            clean = [v for v in float_vals if v is not None]
+                            if clean: dii_curr = clean[-1]
+                        elif "public" in label:
+                            clean = [v for v in float_vals if v is not None]
+                            if clean: pub_curr = clean[-1]
             break
 
-    # If section exists but no promoter row found, it's likely professionally managed (0% promoters)
-    if found_shareholding_section and promoter_current is None:
-        promoter_current = 0.0
-        promoter_prev = 0.0
+    # Final handling for zero-promoter companies (institutions)
+    if found_shareholding_section and prom_curr is None:
+        prom_curr, prom_prev = 0.0, 0.0
         all_holdings = [0.0] * (len(quarters) if quarters else 1)
 
-    if promoter_current is None:
-        # If we didn't even find the section, might be a parsing error or 404
+    if prom_curr is None:
         return None
 
     return {
         "ticker": ticker,
         "company_name": company_name,
         "market_cap": market_cap,
-        "promoter_current": promoter_current,
-        "promoter_prev": promoter_prev,
+        "promoter_current": prom_curr,
+        "promoter_prev": prom_prev,
+        "fii_current": fii_curr,
+        "dii_current": dii_curr,
+        "public_current": pub_curr,
         "all_holdings": [h if h is not None else 0.0 for h in all_holdings],
         "quarters": quarters,
         "exchange": "NSE",
@@ -174,6 +181,17 @@ async def fetch_company_data(ticker: str, client: httpx.AsyncClient) -> dict | N
         return None
     return _parse_screener_page(resp.text, ticker)
 
+
+async def _fetch_and_parse(client, ticker):
+    url = f"https://www.screener.in/company/{ticker}/consolidated/"
+    resp = await client.get(url, follow_redirects=True)
+    if resp.status_code != 200:
+        url = f"https://www.screener.in/company/{ticker}/"
+        resp = await client.get(url, follow_redirects=True)
+    
+    if resp.status_code == 200:
+        return _parse_screener_page(resp.text, ticker)
+    return None
 
 async def run_full_scan():
     """
@@ -237,6 +255,9 @@ async def run_full_scan():
                         "promoter_prev": prev,
                         "promoter_change": change,
                         "promoter_change_abs": abs(change),
+                        "fii_current": data.get("fii_current", 0.0),
+                        "dii_current": data.get("dii_current", 0.0),
+                        "public_current": data.get("public_current", 0.0),
                         "all_holdings": data["all_holdings"],
                         "quarters": data["quarters"],
                         "last_scanned": datetime.utcnow().isoformat(),

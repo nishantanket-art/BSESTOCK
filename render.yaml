@@ -1,7 +1,7 @@
 services:
   # Backend FastAPI Service
   - type: web
-    name: promoter-api
+    name: bsestock
     env: python
     buildCommand: pip install -r requirements.txt
     startCommand: uvicorn backend.main:app --host 0.0.0.0 --port $PORT
@@ -12,19 +12,15 @@ services:
         sync: false
       - key: JWT_SECRET
         generateValue: true
-      - key: OPENAI_API_KEY
-        sync: false
-      - key: TELEGRAM_BOT_TOKEN
-        sync: false
 
-  # Frontend React Service
-  - type: web
-    name: promoter-frontend
+  # Frontend static site
+  - type: static
+    name: bsestock-frontend
     env: node
     buildCommand: cd frontend && npm install && npm run build
-    startCommand: cd frontend && npm run preview -- --port $PORT --host 0.0.0.0
+    publishDir: frontend/dist
     envVars:
       - key: NODE_VERSION
         value: 18.17.0
       - key: VITE_API_URL
-        value: https://promoter-api.onrender.com
+        value: https://bsestock.onrender.com/api
