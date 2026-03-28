@@ -132,10 +132,14 @@ export default function CompanyDetail() {
         
         <div className="flex flex-col items-end shrink-0">
           <div className="text-sm text-[var(--color-text-secondary)] mb-1">Current Promoter Holding</div>
-          <div className="text-4xl font-light mb-2">{(stock.promoter_current || 0).toFixed(2)}%</div>
-          <div className={`flex items-center gap-1.5 font-medium ${(stock.promoter_change || 0) < 0 ? 'text-[var(--color-accent-red)]' : 'text-[var(--color-accent-emerald)]'}`}>
-            {(stock.promoter_change || 0) < 0 ? <TrendingDown className="w-4 h-4" /> : <TrendingUp className="w-4 h-4" />}
-            {Math.abs(stock.promoter_change || 0).toFixed(2)}% change
+          <div className="text-4xl font-light mb-2">
+            {typeof stock.promoter_current === 'number' ? stock.promoter_current.toFixed(2) : '—'}%
+          </div>
+          <div className={`flex items-center gap-1.5 font-medium ${Number(stock.promoter_change) < 0 ? 'text-[var(--color-accent-red)]' : 'text-[var(--color-accent-emerald)]'}`}>
+            {Number(stock.promoter_change) < 0 ? <TrendingDown className="w-4 h-4" /> : <TrendingUp className="w-4 h-4" />}
+            {stock.promoter_change !== 'Pending' && stock.promoter_change !== undefined 
+              ? `${Math.abs(Number(stock.promoter_change)).toFixed(2)}% change` 
+              : 'Pending'}
           </div>
         </div>
       </div>
