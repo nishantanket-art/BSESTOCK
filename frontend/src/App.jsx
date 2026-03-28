@@ -3,6 +3,7 @@ import { Toaster } from 'react-hot-toast';
 import { AuthProvider, useAuth } from './context/AuthContext';
 
 import Navbar from './components/Navbar';
+import ParticleBackground from './components/ParticleBackground';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
 import Dashboard from './pages/Dashboard';
@@ -23,7 +24,8 @@ function PrivateRoute({ children }) {
 // Layout wrapper for authenticated pages
 function AppLayout({ children }) {
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col relative">
+      <ParticleBackground />
       <Navbar />
       <main className="flex-1 overflow-x-hidden pt-4 pb-12">
         {children}
@@ -33,6 +35,10 @@ function AppLayout({ children }) {
 }
 
 function App() {
+  useEffect(() => {
+    document.title = "StoXeye — Insider Intelligence Platform";
+  }, []);
+
   return (
     <AuthProvider>
       <Router>

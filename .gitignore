@@ -1,0 +1,14 @@
+node_modules/
+.env
+.DS_Store
+dist/
+build/
+*.log
+backend/__pycache__/
+backend/venv/
+.venv/
+db_state.json
+*.pyc
+.system_generated/
+frontend/node_modules/
+frontend/dist/

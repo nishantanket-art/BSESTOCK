@@ -82,9 +82,22 @@ export default function Navbar() {
     <nav className="sticky top-0 z-50 glass-card border-b border-[var(--color-border)] px-4 py-3">
       <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
         {/* Logo */}
-        <Link to="/" className="flex items-center gap-2 shrink-0">
-          <Activity className="w-6 h-6 text-[var(--color-accent-blue)]" />
-          <span className="text-lg font-bold text-gradient hidden sm:inline">PromoterAI</span>
+        <Link to="/" className="flex items-center gap-2 shrink-0 group">
+          <div className="relative w-8 h-8 flex items-center justify-center bg-white/5 rounded-xl border border-white/10 group-hover:border-[var(--color-accent-blue)]/50 transition-all duration-300">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="group-hover:scale-110 transition-transform duration-300">
+              <path d="M2 12C2 12 5 5 12 5C19 5 22 12 22 12C22 12 19 19 12 19C5 19 2 12 2 12Z" stroke="url(#eye-gradient)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+              <circle cx="12" cy="12" r="3" stroke="url(#eye-gradient)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+              <defs>
+                <linearGradient id="eye-gradient" x1="2" y1="5" x2="22" y2="19" gradientUnits="userSpaceOnUse">
+                  <stop stopColor="#2962ff" />
+                  <stop offset="1" stopColor="#7c4dff" />
+                </linearGradient>
+              </defs>
+            </svg>
+          </div>
+          <span className="text-xl font-extrabold tracking-tighter hidden sm:inline bg-gradient-to-r from-white to-white/60 bg-clip-text text-transparent">
+            sto<span className="text-[var(--color-accent-blue)]">X</span>eye
+          </span>
         </Link>
 
         {/* Nav Links */}

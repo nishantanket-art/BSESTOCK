@@ -1,19 +1,19 @@
 import { Link } from 'react-router-dom';
 import { TrendingDown, TrendingUp, Eye, EyeOff } from 'lucide-react';
 
-export default function StockCard({ stock, onToggleWatchlist }) {
+export default function StockCard({ stock, onToggleWatchlist, index = 0 }) {
   const riskClass = {
-    High: 'risk-badge-high',
-    Medium: 'risk-badge-medium',
-    Low: 'risk-badge-low',
-  }[stock.risk_level] || 'risk-badge-low';
+    High: 'bg-red-500/10 text-red-500 border-red-500/20 shadow-[0_0_15px_-5px_rgba(239,68,68,0.3)]',
+    Medium: 'bg-amber-500/10 text-amber-500 border-amber-500/20 shadow-[0_0_15px_-5px_rgba(245,158,11,0.3)]',
+    Low: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20 shadow-[0_0_15px_-5px_rgba(16,185,129,0.3)]',
+  }[stock.risk_level] || 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20';
 
-  const verdictColors = {
-    Exit: 'text-[var(--color-verdict-exit)]',
-    Caution: 'text-[var(--color-verdict-caution)]',
-    Hold: 'text-[var(--color-verdict-hold)]',
-    Buy: 'text-[var(--color-verdict-buy)]',
-  };
+  const verdictColor = {
+    Exit: 'text-[var(--color-accent-red)]',
+    Caution: 'text-[var(--color-accent-amber)]',
+    Hold: 'text-[var(--color-text-secondary)]',
+    Buy: 'text-[var(--color-accent-emerald)]',
+  }[stock.verdict] || 'text-[var(--color-text-secondary)]';
 
   const formatNum = (v, dec=1) => {
     if (v === null || v === undefined || isNaN(Number(v))) return '—';
@@ -21,73 +21,68 @@ export default function StockCard({ stock, onToggleWatchlist }) {
   };
 
   return (
-    <div className="glass-card p-4 hover:bg-[var(--color-bg-card-hover)] hover:-translate-y-1 hover:shadow-xl hover:border-[var(--color-border-light)] transition-all duration-300 group relative overflow-hidden">
-      {/* Accent left border on hover */}
-      <div className={`absolute left-0 top-0 bottom-0 w-1 opacity-0 group-hover:opacity-100 transition-opacity duration-300
-        ${stock.verdict === 'Exit' || stock.verdict === 'Caution' ? 'bg-[var(--color-accent-red)]' : 
-          stock.verdict === 'Buy' ? 'bg-[var(--color-accent-emerald)]' : 'bg-[var(--color-accent-blue)]'}`} 
+    <div className="glass-card p-5 group relative overflow-hidden flex flex-col h-full rounded-2xl">
+      {/* Dynamic Background Glow */}
+      <div className={`absolute -top-12 -right-12 w-32 h-32 blur-[60px] opacity-0 group-hover:opacity-20 transition-opacity duration-500
+        ${stock.verdict === 'Buy' ? 'bg-emerald-500' : stock.verdict === 'Exit' ? 'bg-red-500' : 'bg-blue-500'}`} 
       />
 
-      <div className="flex items-start justify-between gap-3 relative z-10 pl-1">
-        {/* Left: Company Info */}
-        <Link to={`/company/${stock.ticker}`} className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-1">
-            <h3 className="text-base font-bold text-[var(--color-text-primary)] group-hover:text-[var(--color-accent-blue)] transition truncate">
-              {stock.ticker}
-            </h3>
-            <span className={`text-[10px] px-2 py-0.5 rounded uppercase font-bold tracking-wide ${riskClass}`}>
-              {stock.risk_level}
-            </span>
+      <div className="relative z-10 flex-1">
+        <div className="flex items-start justify-between mb-4">
+          <div className="min-w-0 flex-1">
+            <Link to={`/company/${stock.ticker}`} className="inline-block">
+              <h3 className="text-xl font-extrabold text-white tracking-tight group-hover:text-[var(--color-accent-blue)] transition-colors duration-300">
+                {stock.ticker}
+              </h3>
+            </Link>
+            <p className="text-xs text-[var(--color-text-muted)] font-medium truncate mt-0.5">
+              {stock.company_name}
+            </p>
           </div>
-          <p className="text-xs text-[var(--color-text-muted)] truncate mb-4 font-medium">
-            {stock.company_name}
-          </p>
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs">
-            <div className="flex flex-col">
-              <span className="text-[10px] text-[var(--color-text-muted)] uppercase tracking-wider mb-0.5">Promoter</span>
-              <span className="text-[var(--color-text-primary)] font-semibold">{formatNum(stock.promoter_current)}%</span>
-            </div>
-            <div className="flex flex-col">
-              <span className="text-[10px] text-[var(--color-text-muted)] uppercase tracking-wider mb-0.5">Change</span>
-              <div className="flex items-center gap-1">
-                {Number(stock.promoter_change) < 0 ? (
-                  <TrendingDown className="w-3 h-3 text-[var(--color-accent-red)]" />
-                ) : Number(stock.promoter_change) > 0 ? (
-                  <TrendingUp className="w-3 h-3 text-[var(--color-accent-emerald)]" />
-                ) : null}
-                <span className={`font-semibold ${Number(stock.promoter_change) < 0 ? 'text-[var(--color-accent-red)]' : Number(stock.promoter_change) > 0 ? 'text-[var(--color-accent-emerald)]' : 'text-[var(--color-text-secondary)]'}`}>
-                  {stock.promoter_change !== 'Pending' && stock.promoter_change !== undefined ? `${Number(stock.promoter_change) > 0 ? '+' : ''}${formatNum(stock.promoter_change, 2)}%` : 'Pending'}
-                </span>
-              </div>
-            </div>
-            {stock.market_cap && stock.market_cap !== 'N/A' && (
-              <div className="flex flex-col hidden sm:flex">
-                <span className="text-[10px] text-[var(--color-text-muted)] uppercase tracking-wider mb-0.5">M.Cap</span>
-                <span className="text-[var(--color-text-secondary)] font-medium">{stock.market_cap}</span>
-              </div>
-            )}
-          </div>
-        </Link>
-
-        {/* Right: Verdict + Watchlist */}
-        <div className="flex flex-col items-end gap-3 shrink-0">
-          <span className={`text-xs font-bold px-2.5 py-1 rounded bg-white/5 border border-white/5 ${verdictColors[stock.verdict] || 'text-[var(--color-text-secondary)]'}`}>
-            {stock.verdict_icon} {stock.verdict}
+          <span className={`text-[9px] px-2 py-0.5 rounded-full border font-bold uppercase tracking-wider ${riskClass}`}>
+            {stock.risk_level} Risk
           </span>
-          {onToggleWatchlist && (
-            <button
-              onClick={(e) => { e.preventDefault(); onToggleWatchlist(stock.ticker, stock.in_watchlist); }}
-              className={`p-1.5 rounded-md transition ${stock.in_watchlist ? 'bg-[var(--color-accent-blue)]/10 text-[var(--color-accent-blue)]' : 'hover:bg-white/10 text-[var(--color-text-muted)]'}`}
-              title={stock.in_watchlist ? 'Remove from watchlist' : 'Add to watchlist'}
-            >
-              {stock.in_watchlist ? (
-                <Eye className="w-4 h-4" />
-              ) : (
-                <EyeOff className="w-4 h-4" />
-              )}
-            </button>
-          )}
         </div>
+
+        <div className="grid grid-cols-2 gap-3 mb-5">
+          <div className="bg-white/5 border border-white/5 rounded-xl p-3">
+            <p className="text-[10px] text-[var(--color-text-muted)] font-bold uppercase tracking-widest mb-1">STAKE</p>
+            <p className="text-lg font-bold text-white leading-none">{formatNum(stock.promoter_current)}%</p>
+          </div>
+          <div className="bg-white/5 border border-white/5 rounded-xl p-3">
+            <p className="text-[10px] text-[var(--color-text-muted)] font-bold uppercase tracking-widest mb-1">CHG</p>
+            <div className="flex items-center gap-1">
+              <span className={`text-lg font-bold leading-none ${Number(stock.promoter_change) > 0 ? 'text-[var(--color-accent-emerald)]' : Number(stock.promoter_change) < 0 ? 'text-[var(--color-accent-red)]' : 'text-zinc-400'}`}>
+                {Number(stock.promoter_change) > 0 ? '+' : ''}{formatNum(stock.promoter_change, 2)}%
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {stock.current_price && (
+          <div className="mb-4">
+             <p className="text-[10px] text-[var(--color-text-muted)] font-bold uppercase tracking-widest mb-1">CURRENT PRICE</p>
+             <p className="text-lg font-extrabold text-white">₹{stock.current_price.toLocaleString('en-IN')}</p>
+          </div>
+        )}
+      </div>
+
+      <div className="relative z-10 pt-4 border-t border-white/5 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <div className={`w-2 h-2 rounded-full animate-pulse ${stock.verdict === 'Buy' ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' : 'bg-zinc-600'}`} />
+          <span className={`text-xs font-black uppercase tracking-widest ${verdictColor}`}>
+            {stock.verdict}
+          </span>
+        </div>
+        
+        {onToggleWatchlist && (
+          <button
+            onClick={(e) => { e.preventDefault(); onToggleWatchlist(stock.ticker, stock.in_watchlist); }}
+            className={`p-2 rounded-xl border transition-all duration-300 ${stock.in_watchlist ? 'bg-[var(--color-accent-blue)] border-[var(--color-accent-blue)] text-white shadow-lg shadow-blue-500/30' : 'bg-white/5 border-white/5 text-[var(--color-text-muted)] hover:text-white hover:border-white/20'}`}
+          >
+            {stock.in_watchlist ? <Eye size={16} /> : <EyeOff size={16} />}
+          </button>
+        )}
       </div>
     </div>
   );
