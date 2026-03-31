@@ -48,8 +48,8 @@ async def list_stocks(
             {"company_name": {"$regex": search, "$options": "i"}},
         ]
 
-    # Only show companies that have been analyzed (have promoter change data)
-    query["promoter_change"] = {"$exists": True}
+    # Show all companies (including those not yet fully scanned)
+    # Companies loaded from db_state.json already have promoter data
 
     # Sort
     sort_dir = -1 if sort_order == "desc" else 1

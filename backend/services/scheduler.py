@@ -41,9 +41,11 @@ async def daily_scan_job():
             score = compute_risk_score(item)
             risk_label = get_risk_label(score)
             item["analysis"]["risk_score"] = score
-            item["analysis"]["risk_level"] = risk_label["level"]
-            item["analysis"]["risk_color"] = risk_label["color"]
-            item["analysis"]["risk_icon"] = risk_label["icon"]
+            # Preserve "Managed" risk_level for institutional companies
+            if item["analysis"].get("category") != "managed":
+                item["analysis"]["risk_level"] = risk_label["level"]
+                item["analysis"]["risk_color"] = risk_label["color"]
+                item["analysis"]["risk_icon"] = risk_label["icon"]
 
         # Step 4: Persist analysis results
         for item in analyzed:

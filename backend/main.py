@@ -26,6 +26,10 @@ async def lifespan(app: FastAPI):
     try:
         await connect_db()
         print("[OK] Application started successfully")
+        # Auto-trigger background scan on startup to ensure data freshness
+        import asyncio
+        from backend.services.scraper import run_full_scan
+        asyncio.create_task(_startup_scan())
     except Exception as e:
         print(f"[WARNING] Startup error (non-fatal): {e}")
     yield
@@ -33,6 +37,19 @@ async def lifespan(app: FastAPI):
         await close_db()
     except Exception as e:
         print(f"[WARNING] Shutdown error: {e}")
+
+
+async def _startup_scan():
+    """Run a background scan after a short delay to let the server finish starting."""
+    import asyncio
+    await asyncio.sleep(5)  # Wait for server to be fully ready
+    try:
+        from backend.services.scraper import run_full_scan
+        print("[SCAN] Auto-triggering background scan on startup...")
+        await run_full_scan()
+        print("[SCAN] Startup scan completed successfully")
+    except Exception as e:
+        print(f"[SCAN] Startup scan error (non-fatal): {e}")
 
 
 app = FastAPI(

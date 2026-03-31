@@ -81,9 +81,11 @@ async def _run_scan_pipeline():
                 score = compute_risk_score(item)
                 risk_label = get_risk_label(score)
                 item["analysis"]["risk_score"] = score
-                item["analysis"]["risk_level"] = risk_label["level"]
-                item["analysis"]["risk_color"] = risk_label["color"]
-                item["analysis"]["risk_icon"] = risk_label["icon"]
+                # Preserve "Managed" risk_level for institutional companies
+                if item["analysis"].get("category") != "managed":
+                    item["analysis"]["risk_level"] = risk_label["level"]
+                    item["analysis"]["risk_color"] = risk_label["color"]
+                    item["analysis"]["risk_icon"] = risk_label["icon"]
                 return item
 
         enrich_tasks = [enrich_item(item) for item in analyzed]
