@@ -7,6 +7,7 @@ console.log("[StoXeye] API URL:", baseURL);
 
 const api = axios.create({
   baseURL,
+  timeout: 15000, // 15s timeout to catch hanging requests
   headers: { 'Content-Type': 'application/json' },
 });
 

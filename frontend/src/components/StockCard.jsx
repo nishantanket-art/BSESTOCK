@@ -18,7 +18,7 @@ export default function StockCard({ stock, onToggleWatchlist, index = 0 }) {
   }[stock.verdict] || 'text-[var(--color-text-secondary)]';
 
   const formatNum = (v, dec=1) => {
-    if (v === null || v === undefined || isNaN(Number(v))) return '—';
+    if (v === null || v === undefined || v === 'Pending' || v === '' || isNaN(Number(v))) return '—';
     return Number(v).toFixed(dec);
   };
 

@@ -1,10 +1,13 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { stocksAPI, watchlistAPI, scannerAPI } from '../services/api';
 import StockCard from '../components/StockCard';
 import SkeletonCard from '../components/SkeletonCard';
-import { Filter, Search, TrendingUp, TrendingDown, AlertTriangle, Info, Play, Activity } from 'lucide-react';
+import { Filter, Search, TrendingUp, TrendingDown, AlertTriangle, Info, Play, Activity, RefreshCw } from 'lucide-react';
 import toast from 'react-hot-toast';
+
+const POLL_INTERVAL_MS = 60_000; // Auto-refresh every 60 seconds
+const MAX_RETRIES = 3;
 
 export default function Dashboard() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -12,28 +15,24 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [watchlist, setWatchlist] = useState(new Set());
   
+  const [lastUpdated, setLastUpdated] = useState(null);
+  const pollTimerRef = useRef(null);
+  const retryCountRef = useRef(0);
+
   const [filters, setFilters] = useState({
     riskLevel: searchParams.get('risk_level') || '',
     verdict: searchParams.get('verdict') || '',
     search: searchParams.get('search') || '',
   });
 
-  useEffect(() => {
-    fetchData();
-  }, [filters]);
-
-  useEffect(() => {
-    const search = searchParams.get('search') || '';
-    if (search !== filters.search) {
-      setFilters(prev => ({ ...prev, search }));
-    }
-  }, [searchParams]);
-
-  const fetchData = async () => {
-    setLoading(true);
+  const fetchData = useCallback(async (isPolling = false) => {
+    if (!isPolling) setLoading(true);
     try {
-      const params = {};
-      if (filters.riskLevel) params.risk_level = filters.riskLevel;
+      const params = { limit: 200 };
+      if (filters.riskLevel) {
+        params.risk = filters.riskLevel;
+        params.risk_level = filters.riskLevel; // Send both for compat
+      }
       if (filters.verdict) params.verdict = filters.verdict;
       if (filters.search) params.search = filters.search;
       
@@ -42,9 +41,13 @@ export default function Dashboard() {
         watchlistAPI.get().catch(() => ({ data: [] }))
       ]);
       
-      setStocks(stocksRes.data.results || []);
+      const results = stocksRes.data.results || [];
+      console.log(`[StoXeye] Fetched ${results.length} stocks`, { count: stocksRes.data.count });
+      setStocks(results);
       const wlData = Array.isArray(watchlistRes.data) ? watchlistRes.data : [];
       setWatchlist(new Set(wlData.map(item => item.ticker)));
+      setLastUpdated(new Date());
+      retryCountRef.current = 0; // Reset retries on success
     } catch (err) {
       console.error("[StoXeye] API Fetch Error:", {
         message: err.message,
@@ -52,11 +55,40 @@ export default function Dashboard() {
         status: err.response?.status,
         data: err.response?.data
       });
-      toast.error('Failed to connect to API server');
+      // Retry with exponential backoff
+      if (retryCountRef.current < MAX_RETRIES) {
+        retryCountRef.current++;
+        const delay = Math.pow(2, retryCountRef.current) * 1000;
+        console.log(`[StoXeye] Retrying in ${delay}ms (attempt ${retryCountRef.current}/${MAX_RETRIES})`);
+        setTimeout(() => fetchData(isPolling), delay);
+        return;
+      }
+      if (!isPolling) toast.error('Failed to connect to API server');
     } finally {
-      setLoading(false);
+      if (!isPolling) setLoading(false);
     }
-  };
+  }, [filters]);
+
+  // Initial fetch + filter changes
+  useEffect(() => {
+    retryCountRef.current = 0;
+    fetchData();
+  }, [fetchData]);
+
+  // Auto-polling interval
+  useEffect(() => {
+    pollTimerRef.current = setInterval(() => {
+      fetchData(true);
+    }, POLL_INTERVAL_MS);
+    return () => clearInterval(pollTimerRef.current);
+  }, [fetchData]);
+
+  useEffect(() => {
+    const search = searchParams.get('search') || '';
+    if (search !== filters.search) {
+      setFilters(prev => ({ ...prev, search }));
+    }
+  }, [searchParams]);
 
   const handleRunScan = async () => {
     try {
@@ -101,7 +133,14 @@ export default function Dashboard() {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
         <div>
           <h1 className="text-2xl font-bold text-[var(--color-text-primary)] mb-1">Market Dashboard</h1>
-          <p className="text-[var(--color-text-secondary)] text-sm">Monitor promoter stake changes across Indian stocks</p>
+          <p className="text-[var(--color-text-secondary)] text-sm flex items-center gap-2">
+            Monitor promoter stake changes across Indian stocks
+            {lastUpdated && (
+              <span className="text-[var(--color-text-muted)] text-xs">
+                · Updated {lastUpdated.toLocaleTimeString()}
+              </span>
+            )}
+          </p>
         </div>
 
         {/* Filters */}

@@ -3,6 +3,7 @@ routers/stocks.py
 Stock listing, company detail, and price correlation endpoints.
 """
 
+import logging
 from fastapi import APIRouter, Depends, Query
 from typing import Optional
 
@@ -11,6 +12,9 @@ from backend.services.price_service import fetch_price_data, compute_price_promo
 from backend.services.news_service import fetch_company_news
 from backend.services.analyzer import generate_insights
 from backend.utils.auth_utils import get_optional_user
+from backend.utils.helpers import safe_float
+
+logger = logging.getLogger("stocks")
 
 router = APIRouter(prefix="/api", tags=["stocks"])
 
@@ -18,12 +22,13 @@ router = APIRouter(prefix="/api", tags=["stocks"])
 @router.get("/stocks")
 async def list_stocks(
     risk: Optional[str] = Query(None, description="Filter by risk level: High, Medium, Low"),
+    risk_level: Optional[str] = Query(None, description="Alias for risk filter (frontend compat)"),
     verdict: Optional[str] = Query(None, description="Filter by verdict: Buy, Hold, Caution, Exit"),
     search: Optional[str] = Query(None, description="Search by ticker or company name"),
     sort_by: Optional[str] = Query("risk_score", description="Sort field"),
     sort_order: Optional[str] = Query("desc", description="Sort order: asc, desc"),
     page: int = Query(1, ge=1),
-    limit: int = Query(50, ge=1, le=200),
+    limit: int = Query(200, ge=1, le=500),
     current_user=Depends(get_optional_user),
 ):
     """List all tracked companies with filters and sorting."""
@@ -31,8 +36,10 @@ async def list_stocks(
 
     # Build filter
     query = {}
-    if risk:
-        query["analysis.risk_level"] = risk
+    # Accept both 'risk' and 'risk_level' params (frontend sends risk_level)
+    effective_risk = risk or risk_level
+    if effective_risk:
+        query["analysis.risk_level"] = effective_risk
     if verdict:
         query["analysis.verdict"] = verdict
     if search:
@@ -70,15 +77,20 @@ async def list_stocks(
             from backend.services.analyzer import analyze_company
             analysis = analyze_company(c)
         
+        # Safe-guard numeric fields to prevent "Pending" strings leaking to frontend
+        prom_current = safe_float(c.get("promoter_current"))
+        prom_change = c.get("promoter_change")
+        prom_change_val = safe_float(prom_change) if prom_change is not None and prom_change != "Pending" else None
+
         results.append({
             "ticker": c["ticker"],
             "company_name": c.get("company_name", c["ticker"]),
             "market_cap": c.get("market_cap", "N/A"),
-            "promoter_current": c.get("promoter_current"),
-            "promoter_change": c.get("promoter_change") if c.get("promoter_change") is not None else "Pending",
-            "fii_current": c.get("fii_current", 0.0),
-            "dii_current": c.get("dii_current", 0.0),
-            "public_current": c.get("public_current", 0.0),
+            "promoter_current": prom_current,
+            "promoter_change": prom_change_val,
+            "fii_current": safe_float(c.get("fii_current")),
+            "dii_current": safe_float(c.get("dii_current")),
+            "public_current": safe_float(c.get("public_current")),
             "last_scanned": c.get("last_scanned"),
             "in_watchlist": c["ticker"] in watchlist_tickers,
             "analysis": analysis,

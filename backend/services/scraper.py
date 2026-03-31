@@ -182,16 +182,8 @@ async def fetch_company_data(ticker: str, client: httpx.AsyncClient) -> dict | N
     return _parse_screener_page(resp.text, ticker)
 
 
-async def _fetch_and_parse(client, ticker):
-    url = f"https://www.screener.in/company/{ticker}/consolidated/"
-    resp = await client.get(url, follow_redirects=True)
-    if resp.status_code != 200:
-        url = f"https://www.screener.in/company/{ticker}/"
-        resp = await client.get(url, follow_redirects=True)
-    
-    if resp.status_code == 200:
-        return _parse_screener_page(resp.text, ticker)
-    return None
+
+
 
 async def run_full_scan():
     """
