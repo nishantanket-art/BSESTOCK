@@ -18,3 +18,4 @@ openai
 flask
 requests
 gunicorn
+mongomock-motor
