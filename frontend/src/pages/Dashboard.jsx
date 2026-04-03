@@ -13,6 +13,7 @@ export default function Dashboard() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [stocks, setStocks] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
   const [watchlist, setWatchlist] = useState(new Set());
   
   const [lastUpdated, setLastUpdated] = useState(null);
@@ -27,6 +28,7 @@ export default function Dashboard() {
 
   const fetchData = useCallback(async (isPolling = false) => {
     if (!isPolling) setLoading(true);
+    setError(false);
     try {
       const params = { limit: 200 };
       if (filters.riskLevel) {
@@ -63,7 +65,10 @@ export default function Dashboard() {
         setTimeout(() => fetchData(isPolling), delay);
         return;
       }
-      if (!isPolling) toast.error('Failed to connect to API server');
+      if (!isPolling) {
+        toast.error('Failed to connect to API server');
+        setError(true);
+      }
     } finally {
       if (!isPolling) setLoading(false);
     }
@@ -192,6 +197,20 @@ export default function Dashboard() {
       {loading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {[1, 2, 3, 4, 5, 6, 7, 8].map(i => <SkeletonCard key={i} />)}
+        </div>
+      ) : error ? (
+        <div className="glass-card p-8 text-center bg-[var(--color-bg-card)] border-red-500/20">
+          <AlertTriangle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-[var(--color-text-primary)] mb-2">Connection Error</h3>
+          <p className="text-[var(--color-text-secondary)] text-sm mb-4">
+            Failed to connect to the backend server. The server might be sleeping or down.
+          </p>
+          <button 
+            onClick={() => fetchData()}
+            className="px-4 py-2 bg-[var(--color-accent-blue)] text-white rounded-lg font-medium hover:bg-blue-600 transition"
+          >
+            Retry Connection
+          </button>
         </div>
       ) : stocks.length > 0 ? (
         <>

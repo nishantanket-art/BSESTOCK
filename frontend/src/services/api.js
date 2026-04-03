@@ -1,9 +1,10 @@
 import axios from 'axios';
 
 // Use the VITE_API_URL environment variable if deployed over Render/Vercel
-// Fallback to '/api' for local proxy development
-const baseURL = import.meta.env.VITE_API_URL || '/api';
-console.log("[StoXeye] API URL:", baseURL);
+// Fallback to production URL if import.meta.env.PROD is true, else fallback to '/api' for local proxy
+const isProd = import.meta.env.PROD;
+const baseURL = import.meta.env.VITE_API_URL || (isProd ? 'https://bsestock.onrender.com/api' : '/api');
+console.log("[StoXeye] API URL:", baseURL, "isProd:", isProd);
 
 const api = axios.create({
   baseURL,
