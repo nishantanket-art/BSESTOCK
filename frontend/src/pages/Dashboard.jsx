@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, Link } from 'react-router-dom';
 import { stocksAPI, watchlistAPI, scannerAPI } from '../services/api';
 import StockCard from '../components/StockCard';
 import SkeletonCard from '../components/SkeletonCard';
@@ -258,24 +258,73 @@ export default function Dashboard() {
                 Market Highlights
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="glass-card-transparent p-4 flex flex-col gap-3">
-                  <div className="flex items-center gap-2 text-[var(--color-accent-emerald)] font-medium text-sm">
+                {/* Top Accumulation */}
+                <div className="glass-card-transparent p-4">
+                  <div className="flex items-center gap-2 text-[var(--color-accent-emerald)] font-medium text-sm mb-3">
                     <TrendingUp className="w-4 h-4" /> Top Accumulation
                   </div>
                   <div className="space-y-2">
-                    {stocks.filter(s => Number(s.promoter_change) > 0).sort((a,b) => Number(b.promoter_change) - Number(a.promoter_change)).slice(0, 2).map(s => (
-                       <StockCard key={s.ticker} stock={{...s, in_watchlist: watchlist.has(s.ticker)}} onToggleWatchlist={toggleWatchlist} />
-                    ))}
+                    {stocks.filter(s => Number(s.promoter_change) > 0).sort((a,b) => Number(b.promoter_change) - Number(a.promoter_change)).slice(0, 3).map(s => {
+                      const change = Number(s.promoter_change);
+                      return (
+                        <Link key={s.ticker} to={`/company/${s.ticker}`} className="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/5 hover:border-emerald-500/30 transition-all duration-300 group/mini">
+                          <div className="flex items-center gap-3 min-w-0">
+                            <div className="min-w-0">
+                              <span className="text-sm font-bold text-white group-hover/mini:text-[var(--color-accent-blue)] transition-colors">{s.ticker}</span>
+                              <p className="text-[10px] text-[var(--color-text-muted)] truncate max-w-[140px]">{s.company_name}</p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-3 shrink-0">
+                            <div className="text-right">
+                              <p className="text-[10px] text-[var(--color-text-muted)] uppercase">Stake</p>
+                              <p className="text-sm font-bold text-white">{Number(s.promoter_current).toFixed(1)}%</p>
+                            </div>
+                            <div className="text-right min-w-[60px]">
+                              <p className="text-[10px] text-[var(--color-text-muted)] uppercase">Chg</p>
+                              <p className="text-sm font-bold text-[var(--color-accent-emerald)]">+{change.toFixed(2)}%</p>
+                            </div>
+                          </div>
+                        </Link>
+                      );
+                    })}
+                    {stocks.filter(s => Number(s.promoter_change) > 0).length === 0 && (
+                      <p className="text-xs text-[var(--color-text-muted)] text-center py-2">No accumulation detected</p>
+                    )}
                   </div>
                 </div>
-                <div className="glass-card-transparent p-4 flex flex-col gap-3">
-                  <div className="flex items-center gap-2 text-[var(--color-accent-red)] font-medium text-sm">
+
+                {/* Top Dilution */}
+                <div className="glass-card-transparent p-4">
+                  <div className="flex items-center gap-2 text-[var(--color-accent-red)] font-medium text-sm mb-3">
                     <TrendingDown className="w-4 h-4" /> Top Dilution
                   </div>
                   <div className="space-y-2">
-                    {stocks.filter(s => Number(s.promoter_change) < 0).sort((a,b) => Number(a.promoter_change) - Number(b.promoter_change)).slice(0, 2).map(s => (
-                       <StockCard key={s.ticker} stock={{...s, in_watchlist: watchlist.has(s.ticker)}} onToggleWatchlist={toggleWatchlist} />
-                    ))}
+                    {stocks.filter(s => Number(s.promoter_change) < 0).sort((a,b) => Number(a.promoter_change) - Number(b.promoter_change)).slice(0, 3).map(s => {
+                      const change = Number(s.promoter_change);
+                      return (
+                        <Link key={s.ticker} to={`/company/${s.ticker}`} className="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/5 hover:border-red-500/30 transition-all duration-300 group/mini">
+                          <div className="flex items-center gap-3 min-w-0">
+                            <div className="min-w-0">
+                              <span className="text-sm font-bold text-white group-hover/mini:text-[var(--color-accent-blue)] transition-colors">{s.ticker}</span>
+                              <p className="text-[10px] text-[var(--color-text-muted)] truncate max-w-[140px]">{s.company_name}</p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-3 shrink-0">
+                            <div className="text-right">
+                              <p className="text-[10px] text-[var(--color-text-muted)] uppercase">Stake</p>
+                              <p className="text-sm font-bold text-white">{Number(s.promoter_current).toFixed(1)}%</p>
+                            </div>
+                            <div className="text-right min-w-[60px]">
+                              <p className="text-[10px] text-[var(--color-text-muted)] uppercase">Chg</p>
+                              <p className="text-sm font-bold text-[var(--color-accent-red)]">{change.toFixed(2)}%</p>
+                            </div>
+                          </div>
+                        </Link>
+                      );
+                    })}
+                    {stocks.filter(s => Number(s.promoter_change) < 0).length === 0 && (
+                      <p className="text-xs text-[var(--color-text-muted)] text-center py-2">No dilution detected</p>
+                    )}
                   </div>
                 </div>
               </div>
