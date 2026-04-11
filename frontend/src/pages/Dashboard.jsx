@@ -7,7 +7,7 @@ import { Filter, Search, TrendingUp, TrendingDown, AlertTriangle, Info, Play, Ac
 import toast from 'react-hot-toast';
 
 const POLL_INTERVAL_MS = 60_000; // Auto-refresh every 60 seconds
-const MAX_RETRIES = 3;
+const MAX_RETRIES = 5;
 
 export default function Dashboard() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -15,9 +15,11 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [watchlist, setWatchlist] = useState(new Set());
+  const [loadingSeconds, setLoadingSeconds] = useState(0);
   
   const [lastUpdated, setLastUpdated] = useState(null);
   const pollTimerRef = useRef(null);
+  const loadingTimerRef = useRef(null);
   const retryCountRef = useRef(0);
 
   const [filters, setFilters] = useState({
@@ -27,7 +29,15 @@ export default function Dashboard() {
   });
 
   const fetchData = useCallback(async (isPolling = false) => {
-    if (!isPolling) setLoading(true);
+    if (!isPolling) {
+      setLoading(true);
+      setLoadingSeconds(0);
+      // Start counting seconds while loading
+      clearInterval(loadingTimerRef.current);
+      loadingTimerRef.current = setInterval(() => {
+        setLoadingSeconds(prev => prev + 1);
+      }, 1000);
+    }
     setError(false);
     try {
       const params = { limit: 200 };
@@ -70,7 +80,10 @@ export default function Dashboard() {
         setError(true);
       }
     } finally {
-      if (!isPolling) setLoading(false);
+      if (!isPolling) {
+        setLoading(false);
+        clearInterval(loadingTimerRef.current);
+      }
     }
   }, [filters]);
 
@@ -195,8 +208,31 @@ export default function Dashboard() {
       </div>
 
       {loading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          {[1, 2, 3, 4, 5, 6, 7, 8].map(i => <SkeletonCard key={i} />)}
+        <div>
+          {/* Server waking up message */}
+          {loadingSeconds > 3 && (
+            <div className="glass-card p-6 mb-6 text-center bg-[var(--color-bg-card)] border border-[var(--color-accent-blue)]/30">
+              <div className="flex items-center justify-center gap-3 mb-3">
+                <RefreshCw className="w-5 h-5 text-[var(--color-accent-blue)] animate-spin" />
+                <h3 className="text-base font-medium text-[var(--color-text-primary)]">Server is waking up...</h3>
+              </div>
+              <p className="text-[var(--color-text-secondary)] text-sm mb-2">
+                Our free-tier server goes to sleep after inactivity. It typically takes <strong>30–60 seconds</strong> to wake up.
+              </p>
+              <div className="flex items-center justify-center gap-2">
+                <div className="h-1.5 w-32 bg-[var(--color-bg-secondary)] rounded-full overflow-hidden">
+                  <div 
+                    className="h-full bg-[var(--color-accent-blue)] rounded-full transition-all duration-1000"
+                    style={{ width: `${Math.min((loadingSeconds / 60) * 100, 95)}%` }}
+                  />
+                </div>
+                <span className="text-xs text-[var(--color-text-muted)]">{loadingSeconds}s</span>
+              </div>
+            </div>
+          )}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {[1, 2, 3, 4, 5, 6, 7, 8].map(i => <SkeletonCard key={i} />)}
+          </div>
         </div>
       ) : error ? (
         <div className="glass-card p-8 text-center bg-[var(--color-bg-card)] border-red-500/20">
