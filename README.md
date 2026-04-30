@@ -1,5 +1,7 @@
 # Promoter Stake AI Platform
 
+@https://bsestock-frontend.onrender.com/
+
 An enterprise-grade, AI-powered financial platform that monitors promoter stake selling in Indian markets.
 
 ## Architecture
